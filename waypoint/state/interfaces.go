@@ -9,6 +9,6 @@ type Record interface {
 }
 
 type RecordList interface {
-	Each(func(Record) error)
+	Each(func(Record) error) error
 	sort.Interface
 }

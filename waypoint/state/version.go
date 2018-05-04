@@ -52,6 +52,16 @@ func NewVersion(major, minor, patch int) Version {
 
 type Versions []*Version
 
+func (v Versions) Each(handler func(Record) error) error {
+	for _, record := range v {
+		err := handler(record)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (vs Versions) Len() int      { return len(vs) }
 func (vs Versions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
 func (vs Versions) Less(i, j int) bool {

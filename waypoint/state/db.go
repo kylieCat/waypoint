@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/boltdb/bolt"
 	"github.com/vmihailenco/msgpack"
@@ -15,6 +16,13 @@ func getDB(path string, mode os.FileMode, options *bolt.Options) (*bolt.DB, erro
 		return nil, err
 	}
 	return db, nil
+}
+
+func closeDb(db *bolt.DB) {
+	err := db.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func getBucket(tx *bolt.Tx, bucketName string) (*bolt.Bucket, error) {
@@ -30,63 +38,54 @@ type WaypointStore struct {
 }
 
 func (wp WaypointStore) GetMostRecent(app string) (*Version, error) {
-	db, err := getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
+	versions, err := wp.ListAll(app)
 	if err != nil {
 		return nil, err
 	}
-	version := &Version{}
-	err = db.View(func(tx *bolt.Tx) error {
-		bucket, err := getBucket(tx, app)
-		if err != nil {
-			return err
-		}
-		notFound := errors.New("no versions found for app")
-		if key, val := bucket.Cursor().Last(); key != nil {
-			err := msgpack.Unmarshal(val, version)
-			if err != nil {
-				return err
-			}
-			notFound = nil
-		}
-
-		return notFound
-	})
-	return version, err
+	versionCount := len(versions)
+	if versionCount == 0 {
+		return nil, errors.New("no versions found for app")
+	}
+	return versions[versionCount-1], err
 }
 
-func (wp WaypointStore) ListAll(app string) ([]*Version, error) {
+func (wp WaypointStore) ListAll(app string) (Versions, error) {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
 	if err != nil {
 		return nil, err
 	}
-
-	versions := make([]*Version, 0)
+	defer closeDb(db)
+	var raw [][]byte
 	err = db.View(func(tx *bolt.Tx) error {
 		b, err := getBucket(tx, app)
 		if err != nil {
 			return err
 		}
 		b.ForEach(func(k, v []byte) error {
-			version := &Version{}
-			if err := msgpack.Unmarshal(v, version); err != nil {
-				return err
-			}
-			versions = append(versions, version)
+			raw = append(raw, v)
 			return nil
 		})
 		return nil
 	})
+	versions := make(Versions, len(raw))
+	for idx, r := range raw {
+		var version Version
+		err := msgpack.Unmarshal(r, &version)
+		if err != nil {
+			return nil, err
+		}
+		versions[idx] = &version
+	}
+	sort.Sort(versions)
 	return versions, err
 }
 
 func (wp WaypointStore) NewVersion(app string, version *Version) error {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
 	if err != nil {
 		return err
 	}
+	defer closeDb(db)
 
 	return db.Update(func(tx *bolt.Tx) error {
 		data, err := msgpack.Marshal(version)
@@ -103,34 +102,26 @@ func (wp WaypointStore) NewVersion(app string, version *Version) error {
 
 func (wp WaypointStore) AddApplication(name string, initialVersion string) error {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
 	if err != nil {
 		return err
 	}
+	defer closeDb(db)
+
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket([]byte(name))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
-		parts, err := GetPartsFromSemVer(initialVersion)
-		if err != nil {
-			return err
-		}
-		newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
-		return wp.NewVersion(name, &newVersion)
-	})
-	if err != nil {
 		return nil
-	}
-	db.Close()
-	db, err = getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
-	return db.Update(func(tx *bolt.Tx) error {
-		parts, err := GetPartsFromSemVer(initialVersion)
-		if err != nil {
-			return err
-		}
-		newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
-		return wp.NewVersion(name, &newVersion)
 	})
+	closeDb(db)
+	if err != nil {
+		return err
+	}
+	parts, err := GetPartsFromSemVer(initialVersion)
+	if err != nil {
+		return err
+	}
+	newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
+	return wp.NewVersion(name, &newVersion)
 }

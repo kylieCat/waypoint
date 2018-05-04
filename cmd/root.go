@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 }
 
 var db = state.WaypointStore{
-	DBFilePath: "./waypt.db",
+	DBFilePath: "/home/iana/.waypt/waypt.db",
 }
 
 func Execute() {

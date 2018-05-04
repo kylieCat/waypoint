@@ -12,7 +12,7 @@ func GetPartsFromSemVer(semver string) ([]int, error) {
 		if err != nil {
 			return nil, err
 		}
-        parts = append(parts, p)
+		parts = append(parts, p)
 	}
 	return parts, nil
 }

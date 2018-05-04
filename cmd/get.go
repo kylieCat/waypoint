@@ -17,8 +17,9 @@ package cmd
 import (
 	"fmt"
 
+	"os"
+
 	"github.com/spf13/cobra"
-    "os"
 )
 
 // getCmd represents the get command
@@ -32,17 +33,16 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-        fmt.Printf("%t", cmd.Flag("all").Changed)
 		versions, err := db.ListAll(args[0])
-        if err != nil {
-            fmt.Errorf(err.Error())
-            os.Exit(2)
-        }
-        listAll(versions)
+		if err != nil {
+			fmt.Errorf(err.Error())
+			os.Exit(2)
+		}
+		listAll(versions)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(getCmd)
-    getCmd.Flags().Bool("all", false, "a bool")
+	getCmd.Flags().Bool("all", false, "a bool")
 }
