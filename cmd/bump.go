@@ -15,22 +15,20 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"os"
 	"fmt"
+	"os"
+
 	"github.com/im-auld/waypoint/waypoint/state"
+	"github.com/spf13/cobra"
 )
 
 // bumpCmd represents the bump command
 var bumpCmd = &cobra.Command{
 	Use:   "bump",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Used to increment a part of a semantic version by one (major, minor, patch)",
+	Long: `Increment a specific part of a semantic version by one. Pass in a flag to specify
+	which part of the verison should be incremented. Incrementing the major version will set
+	the other parts of the version to 0 (1.3.5 -> 2.0.0).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		version, err := db.GetMostRecent(args[0])
 		if err != nil {

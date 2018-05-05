@@ -17,30 +17,26 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // latestCmd represents the latest command
 var latestCmd = &cobra.Command{
 	Use:   "latest",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Get the latest version for an app",
+	Long:  `Gets the latest version for the provided appplication name. This gets the latest version by date.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		latest, err := db.GetMostRecent(args[0])
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-        if cmd.Flag("commit").Changed {
-           fmt.Println(latest.CommitHash)
-           os.Exit(0)
-        }
+		if cmd.Flag("commit").Changed {
+			fmt.Println(latest.CommitHash)
+			os.Exit(0)
+		}
 		fmt.Println(latest.SemVer())
 	},
 }

@@ -25,17 +25,12 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get the versions for an app",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Get all versions for an app",
+	Long:  `The get command will list out all available versions for an app in yaml format.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		versions, err := db.ListAll(args[0])
 		if err != nil {
-			fmt.Errorf(err.Error())
+			fmt.Println(err.Error())
 			os.Exit(2)
 		}
 		listAll(versions)
