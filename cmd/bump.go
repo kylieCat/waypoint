@@ -52,7 +52,7 @@ var bumpCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(bumpCmd)
-	bumpCmd.Flags().Bool("major", false, "Bump the verisn up by one")
-	bumpCmd.Flags().Bool("minor", false, "Bump the verisn up by one")
-	bumpCmd.Flags().Bool("patch", false, "Bump the verisn up by one")
+	bumpCmd.Flags().Bool("major", false, "Bump the major version up by one")
+	bumpCmd.Flags().Bool("minor", false, "Bump the minor version up by one")
+	bumpCmd.Flags().Bool("patch", false, "Bump the patch version up by one")
 }

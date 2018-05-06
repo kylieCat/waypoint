@@ -105,23 +105,27 @@ func (wp WaypointStore) AddApplication(name string, initialVersion string) error
 	if err != nil {
 		return err
 	}
-	defer closeDb(db)
+	defer db.Close()
 
-	err = db.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket([]byte(name))
 		if err != nil {
 			return fmt.Errorf("create bucket: %s", err)
 		}
 		return nil
 	})
-	closeDb(db)
-	if err != nil {
-		return err
-	}
-	parts, err := GetPartsFromSemVer(initialVersion)
-	if err != nil {
-		return err
-	}
-	newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
-	return wp.NewVersion(name, &newVersion)
+    if err != nil {
+        return nil
+    }
+    db.Close()
+	db, err = getDB(wp.DBFilePath, 0600, nil)
+	defer db.Close()
+	return db.Update(func(tx *bolt.Tx) error {
+        parts, err := GetPartsFromSemVer(initialVersion)
+        if err != nil {
+            return err
+        }
+        newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
+		return wp.NewVersion(name, &newVersion)
+    })
 }
