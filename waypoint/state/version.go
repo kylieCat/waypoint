@@ -37,7 +37,7 @@ func (v Version) BumpMajor() Version {
 
 func (v Version) BumpMinor() Version {
 	v.Minor++
-	return NewVersion(v.Major, v.Minor, v.Patch)
+	return NewVersion(v.Major, v.Minor, 0)
 }
 
 func (v Version) BumpPatch() Version {
