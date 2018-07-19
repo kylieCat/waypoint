@@ -1,4 +1,4 @@
-package state
+package waypoint
 
 type Application struct {
 	Name     string   `json:"name"`

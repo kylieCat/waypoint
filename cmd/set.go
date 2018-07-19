@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/im-auld/waypoint/waypoint/state"
+	"github.com/im-auld/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 
@@ -28,12 +28,12 @@ var setCmd = &cobra.Command{
 	Short: "Set the most recent semantic version for an application.",
 	Long:  `Set the most recent semantic version for an application. Defaults to 1.0.0`,
 	Run: func(cmd *cobra.Command, args []string) {
-		parts, err := state.GetPartsFromSemVer(cmd.Flag("semver").Value.String())
+		parts, err := waypoint.GetPartsFromSemVer(cmd.Flag("semver").Value.String())
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-		version := state.NewVersion(parts[state.MAJOR], parts[state.MINOR], parts[state.PATCH])
+		version := waypoint.NewVersion(parts[waypoint.MAJOR], parts[waypoint.MINOR], parts[waypoint.PATCH])
 		err = db.NewVersion(args[0], &version)
 		if err != nil {
 			fmt.Println(err.Error())

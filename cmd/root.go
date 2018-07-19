@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/im-auld/waypoint/waypoint/state"
+	"github.com/im-auld/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +17,8 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var db = state.WaypointStore{
-    DBFilePath: "/Users/iana/.waypt/waypt.db",
+var db = waypoint.WaypointStore{
+	DBFilePath: "/Users/iana/.waypt/waypt.db",
 }
 
 func Execute() {

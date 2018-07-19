@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/im-auld/waypoint/waypoint/state"
+	"github.com/im-auld/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ var bumpCmd = &cobra.Command{
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-		var newVersion state.Version
+		var newVersion waypoint.Version
 		if cmd.Flag("major").Changed {
 			newVersion = version.BumpMajor()
 		}
