@@ -38,6 +38,6 @@ var getCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(getCmd)
 	getCmd.Flags().Bool("all", false, "a bool")
+	rootCmd.AddCommand(getCmd)
 }

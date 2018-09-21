@@ -37,6 +37,12 @@ type WaypointStore struct {
 	DBFilePath string `json:"db_file_path"`
 }
 
+func NewWaypointStoreBolt() DataBase {
+	return  WaypointStore{
+		DBFilePath: "/Users/iana/.waypt/waypt.db",
+	}
+}
+
 func (wp WaypointStore) GetMostRecent(app string) (*Version, error) {
 	versions, err := wp.ListAll(app)
 	if err != nil {
@@ -114,18 +120,18 @@ func (wp WaypointStore) AddApplication(name string, initialVersion string) error
 		}
 		return nil
 	})
-    if err != nil {
-        return nil
-    }
-    db.Close()
+	if err != nil {
+		return nil
+	}
+	db.Close()
 	db, err = getDB(wp.DBFilePath, 0600, nil)
 	defer db.Close()
 	return db.Update(func(tx *bolt.Tx) error {
-        parts, err := GetPartsFromSemVer(initialVersion)
-        if err != nil {
-            return err
-        }
-        newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
+		parts, err := GetPartsFromSemVer(initialVersion)
+		if err != nil {
+			return err
+		}
+		newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
 		return wp.NewVersion(name, &newVersion)
-    })
+	})
 }

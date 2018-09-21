@@ -16,9 +16,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/im-auld/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 
@@ -30,29 +27,18 @@ var bumpCmd = &cobra.Command{
 	which part of the verison should be incremented. Incrementing the major version will set
 	the other parts of the version to 0 (1.3.5 -> 2.0.0).`,
 	Run: func(cmd *cobra.Command, args []string) {
-		version, err := db.GetMostRecent(args[0])
-		if err != nil {
-			fmt.Println(err.Error())
-			os.Exit(2)
-		}
-		var newVersion waypoint.Version
-		if cmd.Flag("major").Changed {
-			newVersion = version.BumpMajor()
-		}
-		if cmd.Flag("minor").Changed {
-			newVersion = version.BumpMinor()
-		}
-		if cmd.Flag("patch").Changed {
-			newVersion = version.BumpPatch()
-		}
-		db.NewVersion(args[0], &newVersion)
+		appName := args[0]
+		version, err := db.GetMostRecent(appName)
+		checkErr(err)
+		releaseType := getReleaseType(cmd)
+		newVersion := bumpVersion(appName, *version, releaseType)
 		fmt.Println(newVersion.SemVer())
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(bumpCmd)
 	bumpCmd.Flags().Bool("major", false, "Bump the major version up by one")
 	bumpCmd.Flags().Bool("minor", false, "Bump the minor version up by one")
 	bumpCmd.Flags().Bool("patch", false, "Bump the patch version up by one")
+	rootCmd.AddCommand(bumpCmd)
 }

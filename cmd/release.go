@@ -16,13 +16,26 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
+	"os"
 )
 
+var (
+	appName, releaseType, target string
+)
+
+func printError()     {}
+func printWarning()   {}
+func checkError()     {}
+func getVersion()     {}
+func buildImage()     {}
+func cleanup()        {}
+func packageChart()   {}
+func updateHelmRepo() {}
+
 // deployCmd represents the deploy command
-var deployCmd = &cobra.Command{
-	Use:   "deploy",
+var releaseCmd = &cobra.Command{
+	Use:   "release",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -31,20 +44,17 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("deploy called")
+		app := args[0]
+		prevVer, err := db.GetMostRecent(app)
+		checkErr(err)
+		releaseType := getReleaseType(cmd)
+		newVer := bumpVersion(appName, *prevVer, releaseType)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(deployCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deployCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deployCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.AddCommand(releaseCmd)
+	releaseCmd.Flags().StringVar(&appName, "app", "", "Application to release")
+	releaseCmd.Flags().StringVar(&releaseType, "type", "", "Release type")
+	releaseCmd.Flags().StringVar(&target, "target", "", "Target env")
 }

@@ -42,6 +42,6 @@ var latestCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(latestCmd)
 	latestCmd.Flags().Bool("commit", false, "get commit instead")
+	rootCmd.AddCommand(latestCmd)
 }
