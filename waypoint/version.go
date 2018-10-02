@@ -14,11 +14,11 @@ const (
 )
 
 type Version struct {
-	Major      int    `json:"major"`
-	Minor      int    `json:"minor"`
-	Patch      int    `json:"patch"`
-	CommitHash string `json:"commit_hash"`
-	Timestamp  int64  `json:"date"`
+	Major      int    `json:"major" yaml:"major"`
+	Minor      int    `json:"minor" yaml:"minor"`
+	Patch      int    `json:"patch" yaml:"patch"`
+	CommitHash string `json:"commitHash" yaml:"commitHash"`
+	Timestamp  int64  `json:"date" yaml:"timestamp"`
 	parts      []int
 }
 
@@ -50,7 +50,7 @@ func NewVersion(major, minor, patch int) Version {
 	return Version{Major: major, Minor: minor, Patch: patch, parts: parts, Timestamp: time.Now().Unix()}
 }
 
-type Versions []*Version
+type Versions []Version
 
 func (v Versions) Each(handler func(Record) error) error {
 	for _, record := range v {
