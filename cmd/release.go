@@ -15,9 +15,8 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
-	"os"
+	"fmt"
 )
 
 var (
@@ -49,6 +48,7 @@ to quickly create a Cobra application.`,
 		checkErr(err)
 		releaseType := getReleaseType(cmd)
 		newVer := bumpVersion(appName, *prevVer, releaseType)
+		fmt.Println(newVer)
 	},
 }
 

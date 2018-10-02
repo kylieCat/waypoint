@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/im-auld/waypoint/cmd"
+	"github.com/kylie-a/waypoint/cmd"
 )
 
 func main() {

@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/im-auld/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 

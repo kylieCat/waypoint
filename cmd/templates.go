@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/im-auld/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/waypoint"
 	"os"
 	"text/template"
 )

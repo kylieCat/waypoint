@@ -33,17 +33,17 @@ func getBucket(tx *bolt.Tx, bucketName string) (*bolt.Bucket, error) {
 	return bucket, nil
 }
 
-type WaypointStore struct {
+type WaypointStoreBolt struct {
 	DBFilePath string `json:"db_file_path"`
 }
 
 func NewWaypointStoreBolt() DataBase {
-	return  WaypointStore{
+	return  WaypointStoreBolt{
 		DBFilePath: "/Users/iana/.waypt/waypt.db",
 	}
 }
 
-func (wp WaypointStore) GetMostRecent(app string) (*Version, error) {
+func (wp WaypointStoreBolt) GetMostRecent(app string) (*Version, error) {
 	versions, err := wp.ListAll(app)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (wp WaypointStore) GetMostRecent(app string) (*Version, error) {
 	return versions[versionCount-1], err
 }
 
-func (wp WaypointStore) ListAll(app string) (Versions, error) {
+func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (wp WaypointStore) ListAll(app string) (Versions, error) {
 	return versions, err
 }
 
-func (wp WaypointStore) NewVersion(app string, version *Version) error {
+func (wp WaypointStoreBolt) NewVersion(app string, version *Version) error {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (wp WaypointStore) NewVersion(app string, version *Version) error {
 	})
 }
 
-func (wp WaypointStore) AddApplication(name string, initialVersion string) error {
+func (wp WaypointStoreBolt) AddApplication(name string, initialVersion string) error {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
 	if err != nil {
 		return err

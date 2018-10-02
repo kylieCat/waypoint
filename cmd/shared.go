@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/im-auld/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/waypoint"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -35,6 +35,7 @@ func getReleaseType(cmd *cobra.Command) waypoint.ReleaseType {
 	if cmd.Flag("patch").Changed {
 		return waypoint.Patch
 	}
+	return waypoint.Minor
 }
 
 func bumpVersion(appName string, version waypoint.Version, releaseType waypoint.ReleaseType) waypoint.Version {

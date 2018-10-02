@@ -43,7 +43,7 @@ func (ds WaypointStoreDS) ListAll(app string) (Versions, error) {
 	_, err := iter.Next(&version)
 	for err == nil {
 		versions = append(versions, version)
-		_, err = it.Next(&version)
+		_, err = iter.Next(&version)
 	}
 	if err != iterator.Done {
 		log.Fatalf("Failed fetching results: %v", err)
@@ -65,5 +65,5 @@ func (ds WaypointStoreDS) AddApplication(name string, initialVersion string) err
 	}
 	parts, _ := GetPartsFromSemVer(initialVersion)
 	version := NewVersion(parts[0], parts[1], parts[2])
-	return ds.NewVersion(app, &version)
+	return ds.NewVersion(app.Name, &version)
 }
