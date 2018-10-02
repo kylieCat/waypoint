@@ -9,13 +9,8 @@ import (
 
 var db waypoint.DataBase
 
-func InitDB(dbType string) {
-	if dbType == "datastore" {
-		db = waypoint.NewWaypointStoreDS()
-	}
-	if dbType == "bolt" {
-		db = waypoint.NewWaypointStoreBolt()
-	}
+func InitDB(conf *waypoint.ConfigFile) {
+	db = waypoint.NewWaypointStoreDS(conf.Project, conf.GetAuth())
 }
 
 func checkErr(err error) {
