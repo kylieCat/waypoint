@@ -1,0 +1,4 @@
+project: unity-is-sre-isolated-test
+auth:
+  kind: credsFile
+  value: ${HOME}/.gcp/test.json

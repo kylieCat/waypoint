@@ -38,7 +38,7 @@ type WaypointStoreBolt struct {
 }
 
 func NewWaypointStoreBolt() DataBase {
-	return  WaypointStoreBolt{
+	return WaypointStoreBolt{
 		DBFilePath: "/Users/iana/.waypt/waypt.db",
 	}
 }
@@ -52,7 +52,7 @@ func (wp WaypointStoreBolt) GetMostRecent(app string) (*Version, error) {
 	if versionCount == 0 {
 		return nil, errors.New("no versions found for app")
 	}
-	return versions[versionCount-1], err
+	return &versions[versionCount-1], err
 }
 
 func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
@@ -80,7 +80,7 @@ func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
 		if err != nil {
 			return nil, err
 		}
-		versions[idx] = &version
+		versions[idx] = version
 	}
 	sort.Sort(versions)
 	return versions, err
