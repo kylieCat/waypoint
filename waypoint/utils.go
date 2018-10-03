@@ -8,9 +8,10 @@ import (
 type ReleaseType string
 
 const (
-	Major ReleaseType = "major"
-	Minor ReleaseType = "minor"
-	Patch ReleaseType = "patch"
+	Major   ReleaseType = "major"
+	Minor   ReleaseType = "minor"
+	Patch   ReleaseType = "patch"
+	Rebuild ReleaseType = "rebuild"
 )
 
 func GetPartsFromSemVer(semver string) ([]int, error) {
