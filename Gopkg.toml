@@ -48,3 +48,7 @@
 [[constraint]]
   name = "github.com/docker/docker-credential-helpers"
   version = "0.6.1"
+
+[[constraint]]
+  name = "k8s.io/helm"
+  branch = "master"

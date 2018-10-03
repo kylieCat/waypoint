@@ -1,4 +1,3 @@
-manifests: manifests/
 auth:
   kind: credsFile
   project: unity-ie-sre-isolated-test
@@ -14,12 +13,29 @@ deployments:
      file: ~/repos/onboarding/Dockerfile
     helm:
       name: https://chartmuseum.test.sre.ie.internal.unity3d.com
+      chartDir: ~/repos/onboarding/manifests/onboarding
+      destDir: ~/repos/onboarding/manifests
+      save: true
+      set:
+      - image.tag=${VERSION}
+      - secret.key=$(cat .${TARGET}_key | base64)
+      - onboarding.gitHash=$(git rev-parse --short=10 HEAD)
+      - onboarding.gitBranch=$(git symbolic-ref --short HEAD)
   prd:
     app: onboarding
     cleanup: true
     project: unity-ie-sre-isolated-prd
     docker:
-      repo: gcr.io/unity-ie-sre-isolated-prd
-      file: Dockerfile
+     repo: gcr.io/unity-ie-sre-isolated-prd
+     context: ~/repos/onboarding
+     file: ~/repos/onboarding/Dockerfile
     helm:
-      name: prd
+      name: https://chartmuseum.sre.ie.internal.unity3d.com
+      chartDir: ~/repos/onboarding/manifests/onboarding
+      destDir: ~/repos/onboarding/manifests
+      save: true
+      set:
+      - image.tag=${VERSION}
+      - secret.key=$(cat .${TARGET}_key | base64)
+      - onboarding.gitHash=$(git rev-parse --short=10 HEAD)
+      - onboarding.gitBranch=$(git symbolic-ref --short HEAD)
