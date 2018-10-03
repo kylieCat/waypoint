@@ -34,7 +34,7 @@ var newCmd = &cobra.Command{
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-		fmt.Printf("Added app %s and set initial version to %s", args[0], initial)
+		fmt.Printf("Added app %s and set initial version to %s\n", args[0], initial)
 	},
 }
 
