@@ -3,7 +3,7 @@ package waypoint
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/docker/docker-credential-helpers/client"
+	_ "github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/mitchellh/go-homedir"
 	"google.golang.org/api/option"
@@ -11,6 +11,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"github.com/docker/docker-credential-helpers/client"
+	"github.com/docker/docker/api/types"
+	"encoding/json"
 )
 
 type AuthKind string
@@ -23,6 +27,9 @@ const (
 
 type HelmConf struct {
 	Name string `json:"name" yaml:"name"`
+	ChartDir string `json:"chartDir" yaml:"chartDir"`
+	DestDir string `json:"destDir" yaml:"destDir"`
+	Save bool `json:"save" yaml:"save"`
 }
 
 type DockerConf struct {
@@ -47,8 +54,12 @@ func (d Deployment) TaggedImageName(version string) string {
 	return fmt.Sprintf("%s:%s", d.ImageName(), version)
 }
 
-func (d Deployment) GetHelmURL(version string) string {
+func (d Deployment) GetHelmDeleteURL(version string) string {
 	return fmt.Sprintf("%s%s/%s/%s", d.Helm.Name, chartsAPI, d.App, version)
+}
+
+func (d Deployment) GetHelmPostURL() string {
+	return fmt.Sprintf("%s%s", d.Helm.Name, chartsAPI)
 }
 
 func (d Deployment) GetDockerfile() string {
@@ -66,12 +77,46 @@ func (d Deployment) GetContext() (io.Reader, error) {
 }
 
 func (d Deployment) GetDockerAuth() string {
-	creds, err := client.Get(client.NewShellProgramFunc("docker-credential-gcloud"), "https://gcr.io")
+	creds, err := client.Get(client.NewShellProgramFunc("docker-credential-gcr"), "https://gcr.io")
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
-	return base64.StdEncoding.EncodeToString([]byte(creds.Secret))
+	authConfig := types.AuthConfig{
+		Username: creds.Username,
+		Password: creds.Secret,
+	}
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(encodedJSON)
+}
+
+func (d Deployment) GetHelmChartDir () string {
+	filePath, _ := homedir.Expand(d.Helm.ChartDir)
+	return filePath
+}
+
+func (d Deployment) GetHelmDestDir () string {
+	filePath, _ := homedir.Expand(d.Helm.DestDir)
+	return filePath
+}
+
+func (d Deployment) GetHelmPackage(version string) []byte {
+	var data []byte
+	var err error
+
+	fileName := fmt.Sprintf("%s-%s.tgz", d.App, version)
+	filePath := filepath.Join(d.GetHelmDestDir(),  fileName)
+	if data, err = ioutil.ReadFile(filePath); err != nil {
+		return nil
+	}
+	return data
+}
+
+func (d Deployment) SaveHelmLocal () bool {
+	return d.Helm.Save
 }
 
 type Deployments map[string]Deployment
