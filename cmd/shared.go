@@ -10,7 +10,8 @@ import (
 var db waypoint.DataBase
 
 func InitDB(conf *waypoint.ConfigFile) {
-	db = waypoint.NewWaypointStoreDS(conf.Project, conf.GetAuth())
+	// db = waypoint.NewWaypointStoreDS(conf.Project, conf.GetAuth())
+	db = waypoint.NewWaypointStoreBolt()
 }
 
 func checkErr(err error) {
