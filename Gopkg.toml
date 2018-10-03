@@ -36,3 +36,15 @@
 [[constraint]]
   branch = "master"
   name = "github.com/vmihailenco/msgpack"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  version = "1.13.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/kylie-a/requests"
+
+[[constraint]]
+  name = "github.com/docker/docker-credential-helpers"
+  version = "0.6.1"

@@ -1,4 +1,25 @@
-project: unity-ie-sre-isolated-test
+manifests: manifests/
 auth:
   kind: credsFile
+  project: unity-ie-sre-isolated-test
   value: /Users/iana/.gcp/isolated/test.json
+deployments:
+  stage:
+    app: onboarding
+    cleanup: true
+    project: unity-ie-sre-isolated-test
+    docker:
+     repo: gcr.io/unity-ie-sre-isolated-test
+     context: ~/repos/onboarding
+     file: ~/repos/onboarding/Dockerfile
+    helm:
+      name: https://chartmuseum.test.sre.ie.internal.unity3d.com
+  prd:
+    app: onboarding
+    cleanup: true
+    project: unity-ie-sre-isolated-prd
+    docker:
+      repo: gcr.io/unity-ie-sre-isolated-prd
+      file: Dockerfile
+    helm:
+      name: prd
