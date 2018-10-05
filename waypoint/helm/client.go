@@ -22,6 +22,8 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/repo"
+	"k8s.io/helm/pkg/proto/hapi/services"
+	"os/exec"
 )
 
 const chartsAPI = "/api/charts"
@@ -76,7 +78,7 @@ func NewHelmClient(opts ...HelmOption) *Client {
 	var err error
 	var homeDir string
 
-	tillerClient := helm.NewClient()
+	tillerClient := helm.NewClient(helm.Host("localhost:8081"))
 
 	helmHome := ".helm"
 	if homeDir, err = homedir.Dir(); err != nil {
@@ -138,7 +140,6 @@ func (c *Client) HasChart(app, repoName, version string) bool {
 	if resp, err = requests.Get(url, requests.WithBasicAuth(c.token)); err != nil {
 		return false
 	}
-	fmt.Println(resp)
 	return resp.Code == 200
 }
 
@@ -200,6 +201,27 @@ func (c *Client) Install(src, ns string, opts map[string]interface{}) error {
 	}
 	installOpts := optMap.getOptions(opts)
 	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns, installOpts...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Upgrade(app, src string) error {
+	var ch *chart.Chart
+	var resp *services.UpdateReleaseResponse
+	var err error
+
+	if ch, err = chartutil.LoadFile(src); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := exec.CommandContext(ctx, "kubectl", "port-forward", "tiller-deploy-5c688d5f9b-m56gg", "8081:44134").Run(); err != nil {
+		// This will fail after 100 milliseconds. The 5 second sleep
+		// will be interrupted.
+	}
+	if resp, err = c.tillerClient.UpdateReleaseFromChart(app, ch); err != nil {
+		fmt.Println(resp, err)
 		return err
 	}
 	return nil
