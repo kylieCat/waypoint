@@ -36,5 +36,4 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is .waypoint.yaml)")
 	conf = waypoint.GetConf(cfgFile)
 	InitDB(conf)
-	db = waypoint.NewWaypointStoreDS(conf.Auth.Project, conf.GetAuth())
 }

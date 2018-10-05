@@ -12,8 +12,8 @@ const (
 	YELLOW    = "\033[0;38;5;11m"
 	RED       = "\033[0;38;5;9m"
 	COLOR_OFF = "\033[0m"
-	SUCCESS   = "SUCCESS!\n"
-	ERROR_MSG = "${RED}ERROR: %s ${COLOR_OFF}\n"
+	SUCCESS   = "Success!\n"
+	ERROR_MSG = "${Red}ERROR: %s ${colorOff}\n"
 )
 
 var (
@@ -26,12 +26,34 @@ func InitDB(conf *waypoint.Config) {
 	db = waypoint.NewWaypointStoreDS(conf.Auth.Project, conf.GetAuth())
 }
 
+func colorPrint(color, msg string) string {
+	return fmt.Sprintf("%s%s%s", color, msg, COLOR_OFF)
+}
+
+func green(msg string) string {
+	return colorPrint(GREEN, msg)
+}
+
+func yellow(msg string) string {
+	return colorPrint(YELLOW, msg)
+}
+
+func red(msg string) string {
+	return colorPrint(RED, msg)
+}
+
 func printError(msg string) {
-	fmt.Printf("%sERROR: %s.%s\n", RED, msg, COLOR_OFF)
+	msg = "ERROR: " + msg
+	fmt.Println(red(msg))
 }
 
 func printWarning(msg string) {
-	fmt.Printf("%sWARNING: %s.%s\n", YELLOW, msg, COLOR_OFF)
+	msg = "WARNING: " + msg
+	fmt.Println(yellow(msg))
+}
+
+func printSkipping() {
+	fmt.Println(yellow("SKIPPING: step ShouldExecute returned false"))
 }
 
 func checkErr(err error, exitOnError, done bool) {
@@ -44,7 +66,7 @@ func checkErr(err error, exitOnError, done bool) {
 		}
 	}
 	if done {
-		fmt.Printf("%s\n", DONE)
+		fmt.Println(green("DONE!"))
 	}
 }
 

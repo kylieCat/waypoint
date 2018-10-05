@@ -9,6 +9,7 @@ deployments:
     project: unity-ie-sre-isolated-test
     docker:
      repo: gcr.io/unity-ie-sre-isolated-test
+     creds: docker-credentials-gcr
      context: ~/repos/onboarding
      file: ~/repos/onboarding/Dockerfile
     helm:
@@ -27,6 +28,7 @@ deployments:
     project: unity-ie-sre-isolated-prd
     docker:
      repo: gcr.io/unity-ie-sre-isolated-prd
+     creds: docker-credentials-gcr
      context: ~/repos/onboarding
      file: ~/repos/onboarding/Dockerfile
     helm:

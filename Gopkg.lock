@@ -397,6 +397,7 @@
     "encoding",
     "encoding/proto",
     "grpclog",
+    "health/grpc_health_v1",
     "internal",
     "internal/backoff",
     "internal/channelz",
@@ -442,15 +443,22 @@
     "pkg/chartutil",
     "pkg/engine",
     "pkg/getter",
+    "pkg/helm",
     "pkg/helm/environment",
     "pkg/helm/helmpath",
     "pkg/ignore",
+    "pkg/manifest",
     "pkg/plugin",
     "pkg/proto/hapi/chart",
+    "pkg/proto/hapi/release",
+    "pkg/proto/hapi/services",
     "pkg/proto/hapi/version",
     "pkg/provenance",
+    "pkg/releaseutil",
     "pkg/renderutil",
     "pkg/repo",
+    "pkg/storage/errors",
+    "pkg/strvals",
     "pkg/sympath",
     "pkg/tlsutil",
     "pkg/urlutil",
@@ -461,6 +469,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6891b2f415fc20468057ba4f0f494d45998633fcf56692eead9c8766b77dadff"
+  inputs-digest = "a8808054eb42dca48d723ceeb20e1d94f9506d85523af22869b2eaa20dbb7185"
   solver-name = "gps-cdcl"
   solver-version = 1
