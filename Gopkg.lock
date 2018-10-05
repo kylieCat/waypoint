@@ -171,6 +171,16 @@
   version = "v2.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/gosuri/uitable"
+  packages = [
+    ".",
+    "util/strutil",
+    "util/wordwrap"
+  ]
+  revision = "36ee7e946282a3fb1cfecd476ddc9b35d8847e42"
+
+[[projects]]
   name = "github.com/huandu/xstrings"
   packages = ["."]
   revision = "f02667b379e2fb5916c3cda2cf31e0eb885d79f8"
@@ -199,6 +209,12 @@
   name = "github.com/kylie-a/requests"
   packages = ["."]
   revision = "4007da5eac2706866ed4ffd9b247e6f276507afe"
+
+[[projects]]
+  name = "github.com/mattn/go-runewidth"
+  packages = ["."]
+  revision = "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
@@ -458,7 +474,6 @@
     "pkg/renderutil",
     "pkg/repo",
     "pkg/storage/errors",
-    "pkg/strvals",
     "pkg/sympath",
     "pkg/tlsutil",
     "pkg/urlutil",
@@ -469,6 +484,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a8808054eb42dca48d723ceeb20e1d94f9506d85523af22869b2eaa20dbb7185"
+  inputs-digest = "6a334e9fef4e62cc156f742cfe71988c36e6a00e6223d7203dc48b0150bce7b9"
   solver-name = "gps-cdcl"
   solver-version = 1
