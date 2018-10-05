@@ -5,10 +5,6 @@ import (
 	"os"
 
 	"path/filepath"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/helm"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
 	"k8s.io/helm/pkg/repo"
 )
 
@@ -159,7 +155,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return true
+			return false
 		},
 	},
 	{
@@ -168,25 +164,12 @@ var DefaultSteps = []Step{
 			return fmt.Sprintf("Updating release %s...", green(appVer))
 		},
 		Action: func(r Release) error {
-			var chart *chart.Chart
-			var resp *rls.UpdateReleaseResponse
-			var err error
-
-			helmClient := helm.NewClient()
-
-			if chart, err = chartutil.LoadFile(r.deploy.GetHelmPackagePath(r.newVersion.SemVer())); err != nil {
-				return err
-			}
-			v := make([]byte, 0)
-			if resp, err = helmClient.UpdateReleaseFromChart(r.deploy.App, chart, helm.UpdateValueOverrides(v)); err != nil {
-				return err
-			}
-			fmt.Println(resp)
-			return nil
+			src := r.deploy.GetHelmPackagePath(r.newVersion.SemVer())
+			return r.helm.Upgrade(r.App(), src)
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return true
 		},
 	},
 }
