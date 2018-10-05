@@ -1,20 +1,13 @@
 package waypoint
 
 import (
-	"encoding/base64"
 	"fmt"
-	_ "github.com/docker/docker-credential-helpers/client"
-	"github.com/docker/docker/pkg/archive"
 	"github.com/mitchellh/go-homedir"
 	"google.golang.org/api/option"
 	"gopkg.in/yaml.v2"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"github.com/docker/docker-credential-helpers/client"
-	"github.com/docker/docker/api/types"
-	"encoding/json"
 )
 
 type AuthKind string
@@ -26,14 +19,16 @@ const (
 )
 
 type HelmConf struct {
-	Name string `json:"name" yaml:"name"`
-	ChartDir string `json:"chartDir" yaml:"chartDir"`
-	DestDir string `json:"destDir" yaml:"destDir"`
-	Save bool `json:"save" yaml:"save"`
+	Name     string   `json:"name" yaml:"name"`
+	ChartDir string   `json:"chartDir" yaml:"chartDir"`
+	DestDir  string   `json:"destDir" yaml:"destDir"`
+	Save     bool     `json:"save" yaml:"save"`
+	Set      []string `json:"set" yaml:"set"`
 }
 
 type DockerConf struct {
 	Repo    string `json:"repo" yaml:"repo"`
+	Creds   string `json:"creds" yaml:"creds"`
 	Context string `json:"context" yaml:"context"`
 	File    string `json:"file" yaml:"file"`
 }
@@ -43,6 +38,23 @@ type Deployment struct {
 	Project string     `json:"project" yaml:"project"`
 	Docker  DockerConf `json:"docker" yaml:"docker"`
 	Helm    HelmConf   `json:"helm" yaml:"helm"`
+}
+
+func (d Deployment) GetDockerRepo() string {
+	return d.Docker.Repo
+}
+
+func (d Deployment) GetDockerfile() string {
+	filePath, _ := homedir.Expand(d.Docker.File)
+	return filePath
+}
+
+func (d Deployment) DockerCredHelper() string {
+	return d.Docker.Creds
+}
+
+func (d Deployment) DockerContext() string {
+	return d.Docker.Context
 }
 
 func (d Deployment) ImageName() string {
@@ -62,60 +74,33 @@ func (d Deployment) GetHelmPostURL() string {
 	return fmt.Sprintf("%s%s", d.Helm.Name, chartsAPI)
 }
 
-func (d Deployment) GetDockerfile() string {
-	filePath, _ := homedir.Expand(d.Docker.File)
-	return filePath
-}
-
-func (d Deployment) GetContext() (io.Reader, error) {
-	ctxDir, err := homedir.Expand(d.Docker.Context)
-	if err != nil {
-		return nil, err
-	}
-
-	return archive.TarWithOptions(ctxDir, &archive.TarOptions{})
-}
-
-func (d Deployment) GetDockerAuth() string {
-	creds, err := client.Get(client.NewShellProgramFunc("docker-credential-gcr"), "https://gcr.io")
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	authConfig := types.AuthConfig{
-		Username: creds.Username,
-		Password: creds.Secret,
-	}
-	encodedJSON, err := json.Marshal(authConfig)
-	if err != nil {
-		panic(err)
-	}
-	return base64.URLEncoding.EncodeToString(encodedJSON)
-}
-
-func (d Deployment) GetHelmChartDir () string {
+func (d Deployment) GetHelmChartDir() string {
 	filePath, _ := homedir.Expand(d.Helm.ChartDir)
 	return filePath
 }
 
-func (d Deployment) GetHelmDestDir () string {
+func (d Deployment) GetHelmDestDir() string {
 	filePath, _ := homedir.Expand(d.Helm.DestDir)
 	return filePath
+}
+
+func (d Deployment) GetHelmPackagePath(version string) string {
+	fileName := fmt.Sprintf("%s-%s.tgz", d.App, version)
+	return filepath.Join(d.GetHelmDestDir(), fileName)
 }
 
 func (d Deployment) GetHelmPackage(version string) []byte {
 	var data []byte
 	var err error
 
-	fileName := fmt.Sprintf("%s-%s.tgz", d.App, version)
-	filePath := filepath.Join(d.GetHelmDestDir(),  fileName)
+	filePath := d.GetHelmPackagePath(version)
 	if data, err = ioutil.ReadFile(filePath); err != nil {
 		return nil
 	}
 	return data
 }
 
-func (d Deployment) SaveHelmLocal () bool {
+func (d Deployment) SaveHelmLocal() bool {
 	return d.Helm.Save
 }
 

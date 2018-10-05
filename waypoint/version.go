@@ -45,6 +45,21 @@ func (v Version) BumpPatch() Version {
 	return NewVersion(v.Major, v.Minor, v.Patch)
 }
 
+func (v Version) Bump(releaseType ReleaseType) *Version {
+	var newVersion Version
+	switch releaseType {
+	case Major:
+		newVersion = v.BumpMajor()
+	case Minor:
+		newVersion = v.BumpMinor()
+	case Patch:
+		newVersion = v.BumpPatch()
+	case Rebuild:
+		newVersion = v
+	}
+	return &newVersion
+}
+
 func NewVersion(major, minor, patch int) Version {
 	parts := []int{major, minor, patch}
 	return Version{Major: major, Minor: minor, Patch: patch, parts: parts, Timestamp: time.Now().Unix()}
