@@ -22,7 +22,8 @@ func NewWaypointStoreDS(projectID string, opts ...option.ClientOption) *Waypoint
 }
 
 func (ds WaypointStoreDS) GetMostRecent(app string) (*Version, error) {
-	q := datastore.NewQuery("release").Order("-Timestamp").Limit(1)
+	parentKey := datastore.NameKey("application", app, nil)
+	q := datastore.NewQuery("release").Ancestor(parentKey).Order("-Timestamp").Limit(1)
 	iter := ds.client.Run(context.Background(), q)
 	var version Version
 	_, err := iter.Next(&version)

@@ -1,0 +1,10 @@
+indexes:
+- kind: release
+  ancestor: yes
+  properties:
+  - name: Timestamp
+- kind: release
+  ancestor: yes
+  properties:
+  - name: Timestamp
+    direction: desc

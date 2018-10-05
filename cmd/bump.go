@@ -29,7 +29,7 @@ var bumpCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		appName := args[0]
 		version, err := db.GetMostRecent(appName)
-		checkErr(err)
+		checkErr(err, true, false)
 		releaseType := getReleaseType(cmd)
 		newVersion := bumpVersion(appName, *version, releaseType)
 		fmt.Println(newVersion.SemVer())

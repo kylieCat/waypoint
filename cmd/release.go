@@ -15,22 +15,13 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/kylie-a/waypoint/waypoint"
 	"github.com/spf13/cobra"
 )
 
 var (
-	appName, releaseType, target string
+	target string
 )
-
-func printError()     {}
-func printWarning()   {}
-func checkError()     {}
-func getVersion()     {}
-func buildImage()     {}
-func cleanup()        {}
-func packageChart()   {}
-func updateHelmRepo() {}
 
 // deployCmd represents the deploy command
 var releaseCmd = &cobra.Command{
@@ -43,18 +34,17 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		app := args[0]
-		prevVer, err := db.GetMostRecent(app)
-		checkErr(err)
 		releaseType := getReleaseType(cmd)
-		newVer := bumpVersion(appName, *prevVer, releaseType)
-		fmt.Println(newVer)
+		release := waypoint.NewRelease(conf, target, releaseType)
+		release.Do(waypoint.DefaultSteps)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(releaseCmd)
-	releaseCmd.Flags().StringVar(&appName, "app", "", "Application to release")
-	releaseCmd.Flags().StringVar(&releaseType, "type", "", "Release type")
-	releaseCmd.Flags().StringVar(&target, "target", "", "Target env")
+	releaseCmd.Flags().Bool("major", false, "Bump the major version up by one")
+	releaseCmd.Flags().Bool("minor", false, "Bump the minor version up by one")
+	releaseCmd.Flags().Bool("patch", false, "Bump the patch version up by one")
+	releaseCmd.Flags().Bool("rebuild", false, "Reuse the latest version up by one")
+	releaseCmd.Flags().StringVar(&target, "target", "", "The deployment to target in the conf file.")
 }

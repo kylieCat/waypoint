@@ -10,14 +10,14 @@ import (
 
 var (
 	cfgFile string
-	conf *waypoint.ConfigFile
+	conf    *waypoint.Config
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "bn",
-	Short: "A command line interface for the BetterNeighbor API",
-	Long:  `Add, remove and modify Services, Contacts, Service Groups, and Environments`,
+	Use:   "waypoint",
+	Short: "A command line interface for deploying SRE services",
+	Long:  `A command line interface for deploying SRE services`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -33,7 +33,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is $HOME/.waypoint.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is .waypoint.yaml)")
 	conf = waypoint.GetConf(cfgFile)
 	InitDB(conf)
 }
