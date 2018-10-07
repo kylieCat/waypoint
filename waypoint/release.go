@@ -3,12 +3,14 @@ package waypoint
 import (
 	"os"
 
-	"github.com/kylie-a/waypoint/waypoint/docker"
-	helm2 "github.com/kylie-a/waypoint/waypoint/helm"
-	"github.com/mitchellh/go-homedir"
 	"fmt"
-	"path/filepath"
 	"io/ioutil"
+	"path/filepath"
+
+	"github.com/kylie-a/waypoint/waypoint/docker"
+	"github.com/kylie-a/waypoint/waypoint/helm"
+	"github.com/kylie-a/waypoint/waypoint/k8s"
+	"github.com/mitchellh/go-homedir"
 )
 
 var db DataBase
@@ -20,7 +22,8 @@ type Release struct {
 	prevVersion *Version
 	newVersion  *Version
 	docker      *docker.Client
-	helm        *helm2.Client
+	helm        *helm.Client
+	k8s         *k8s.Client
 }
 
 func (r Release) Do(steps []Step) {
@@ -109,16 +112,23 @@ func NewRelease(conf *Config, target string, typ ReleaseType) Release {
 	prevVer, err := db.GetMostRecent(deploy.App)
 	checkErr(err, true, false)
 	newVer = prevVer.Bump(typ)
-	dkr, err := docker.NewDockerClient()
+	dockerClient, err := docker.NewDockerClient()
 	checkErr(err, true, false)
-	helm := helm2.NewHelmClient(helm2.HelmToken(os.Getenv("HELM_TOKEN")))
+	helmClient := helm.NewHelmClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
+	k8sClient := k8s.NewClient(
+		k8s.Token(os.Getenv("K8S_TOKEN")),
+		k8s.Endpoint(deploy.Tiller.Endpoint),
+		k8s.Context(deploy.Tiller.Context),
+		k8s.Labels(deploy.Tiller.Labels),
+	)
 	return Release{
 		conf:        conf,
 		deploy:      deploy,
 		typ:         typ,
 		prevVersion: prevVer,
 		newVersion:  newVer,
-		docker:      dkr,
-		helm:        helm,
+		docker:      dockerClient,
+		helm:        helmClient,
+		k8s:         k8sClient,
 	}
 }
