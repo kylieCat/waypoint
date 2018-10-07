@@ -22,8 +22,6 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/repo"
-	"k8s.io/helm/pkg/proto/hapi/services"
-	"os/exec"
 )
 
 const chartsAPI = "/api/charts"
@@ -208,20 +206,13 @@ func (c *Client) Install(src, ns string, opts map[string]interface{}) error {
 
 func (c *Client) Upgrade(app, src string) error {
 	var ch *chart.Chart
-	var resp *services.UpdateReleaseResponse
 	var err error
 
 	if ch, err = chartutil.LoadFile(src); err != nil {
 		return err
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	if err := exec.CommandContext(ctx, "kubectl", "port-forward", "tiller-deploy-5c688d5f9b-m56gg", "8081:44134").Run(); err != nil {
-		// This will fail after 100 milliseconds. The 5 second sleep
-		// will be interrupted.
-	}
-	if resp, err = c.tillerClient.UpdateReleaseFromChart(app, ch); err != nil {
-		fmt.Println(resp, err)
+
+	if _, err = c.tillerClient.UpdateReleaseFromChart(app, ch); err != nil {
 		return err
 	}
 	return nil
@@ -254,6 +245,16 @@ func (c *Client) UpdateRepos() error {
 		}
 		c.updateRepos(repos, c.env.Home)
 	}
+	return err
+}
+
+func (c *Client) UpdateIndex(chartSrc, baseURL string) error {
+	//helm repo index manifests/${app} --url ${repo_url}
+	path, err := filepath.Abs(chartSrc)
+	if err != nil {
+		return err
+	}
+	return c.index(path, baseURL, "")
 	return err
 }
 
