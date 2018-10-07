@@ -26,45 +26,6 @@ import (
 
 const chartsAPI = "/api/charts"
 
-type HelmOption func(client *Client)
-
-func HelmHost(host string) HelmOption {
-	return func(client *Client) {
-		client.tillerOpts = append(client.tillerOpts, helm.Host(host))
-	}
-}
-
-func HelmWithTLS(cfg *tls.Config) HelmOption {
-	return func(client *Client) {
-		client.tillerOpts = append(client.tillerOpts, helm.WithTLS(cfg))
-	}
-}
-
-func HelmBeforeCall(fn func(context.Context, proto.Message) error) HelmOption {
-	return func(client *Client) {
-		client.tillerOpts = append(client.tillerOpts, helm.BeforeCall(fn))
-	}
-}
-
-func HelmConnectTimeout(timeout int64) HelmOption {
-	return func(client *Client) {
-		client.tillerOpts = append(client.tillerOpts, helm.ConnectTimeout(timeout))
-	}
-}
-
-func HelmHome(value string) HelmOption {
-	return func(client *Client) {
-		path, _ := homedir.Expand(value)
-		client.env.Home = helmpath.Home(path)
-	}
-}
-
-func HelmToken(value string) HelmOption {
-	return func(client *Client) {
-		client.token = value
-	}
-}
-
 type Client struct {
 	tillerClient *helm.Client
 	tillerOpts   []helm.Option
