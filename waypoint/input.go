@@ -2,12 +2,13 @@ package waypoint
 
 import (
 	"fmt"
-	"github.com/mitchellh/go-homedir"
-	"google.golang.org/api/option"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/mitchellh/go-homedir"
+	"google.golang.org/api/option"
+	"gopkg.in/yaml.v2"
 )
 
 type AuthKind string
@@ -17,6 +18,13 @@ const (
 	CredsFile AuthKind = "credsFile"
 	chartsAPI          = "/api/charts"
 )
+
+type TillerConf struct {
+	Namespace string   `json:"namespace" yaml:"namespace"`
+	Context   string   `json:"context" yaml:"context"`
+	Endpoint  string   `json:"endpoint" yaml:"endpoint"`
+	Labels    []string `json:"labels" yaml:"labels"`
+}
 
 type HelmConf struct {
 	Name     string   `json:"name" yaml:"name"`
@@ -38,6 +46,7 @@ type Deployment struct {
 	Project string     `json:"project" yaml:"project"`
 	Docker  DockerConf `json:"docker" yaml:"docker"`
 	Helm    HelmConf   `json:"helm" yaml:"helm"`
+	Tiller  TillerConf `json:"tiller" yaml:"tiller"`
 }
 
 func (d Deployment) GetDockerRepo() string {
