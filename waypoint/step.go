@@ -148,7 +148,14 @@ var DefaultSteps = []Step{
 			return fmt.Sprintf("Installing chart %s...", green(appVer))
 		},
 		Action: func(r Release) error {
+			var cancel context.CancelFunc
+			var err error
+
 			src := r.GetHelmPackagePath(r.newVersion.SemVer())
+			if cancel, err = r.k8s.StartForwarder(); err != nil {
+				return err
+			}
+			defer cancel()
 			return r.helm.Install(src, "sre", map[string]interface{}{})
 		},
 		ExitOnErr: true,
