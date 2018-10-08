@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kylie-a/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/pkg"
 	"github.com/spf13/cobra"
 )
 
 var (
 	cfgFile string
-	conf    *waypoint.Config
+	conf    *pkg.Config
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "waypoint",
+	Use:   "pkg",
 	Short: "A command line interface for deploying SRE services",
 	Long:  `A command line interface for deploying SRE services`,
 	// Uncomment the following line if your bare application
@@ -33,7 +33,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is .waypoint.yaml)")
-	conf = waypoint.GetConf(cfgFile)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".pkg.yaml", "config file (default is .pkg.yaml)")
+	conf = pkg.GetConf(cfgFile)
 	InitDB(conf)
 }

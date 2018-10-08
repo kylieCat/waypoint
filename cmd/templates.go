@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kylie-a/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/pkg"
 	"os"
 	"text/template"
 )
@@ -11,7 +11,7 @@ const (
 	master = `Versions:{{block "list" .}}{{"\n"}}{{range .}}{{println "- Version: " .SemVer}}{{println "  Date: " .Timestamp}}{{end}}{{end}}`
 )
 
-func listAll(versions waypoint.Versions) {
+func listAll(versions pkg.Versions) {
 	masterTmpl, err := template.New("master").Parse(master)
 	if err != nil {
 		fmt.Errorf(err.Error())

@@ -24,8 +24,8 @@ import (
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Add a new application to waypoint with a default version 0.1.0",
-	Long: `Add a new application to waypoint. Specify an initial version with the
+	Short: "Add a new application to pkg with a default version 0.1.0",
+	Long: `Add a new application to pkg. Specify an initial version with the
 	--initial option`,
 	Run: func(cmd *cobra.Command, args []string) {
 		initial := cmd.Flag("initial").Value.String()

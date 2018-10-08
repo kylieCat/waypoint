@@ -15,7 +15,7 @@
 package cmd
 
 import (
-	"github.com/kylie-a/waypoint/waypoint"
+	"github.com/kylie-a/waypoint/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -35,8 +35,8 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		releaseType := getReleaseType(cmd)
-		release := waypoint.NewRelease(conf, target, releaseType)
-		release.Do(waypoint.DefaultSteps)
+		release := pkg.NewRelease(conf, target, releaseType)
+		release.Do(pkg.DefaultSteps)
 	},
 }
 
