@@ -1,13 +1,14 @@
 package helm
 
 import (
-	"k8s.io/helm/pkg/helm"
-	"github.com/pkg/errors"
+	"context"
 	"crypto/tls"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
+	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/helmpath"
-	"context"
 )
 
 type HelmOption func(client *Client)
@@ -196,18 +197,18 @@ func (o optionsMap) Get(optName string) InstallOption {
 }
 
 var optMap = optionsMap{
-	"valueOverrides": ValueOverrides{},
-	"releaseName": ReleaseName{},
-	"installTimeout": InstallTimeout{},
-	"installWait": InstallWait{},
-	"installDescription": InstallDescription{},
-	"installDryRun": InstallDryRun{},
-	"installDisableHooks": InstallDisableHooks{},
+	"valueOverrides":        ValueOverrides{},
+	"releaseName":           ReleaseName{},
+	"installTimeout":        InstallTimeout{},
+	"installWait":           InstallWait{},
+	"installDescription":    InstallDescription{},
+	"installDryRun":         InstallDryRun{},
+	"installDisableHooks":   InstallDisableHooks{},
 	"installDisableCRDHook": InstallDisableCRDHook{},
-	"installReuseName": InstallReuseName{},
+	"installReuseName":      InstallReuseName{},
 }
 
-func(o optionsMap) getOptions(args map[string]interface{}) []helm.InstallOption {
+func (o optionsMap) getOptions(args map[string]interface{}) []helm.InstallOption {
 	out := make([]helm.InstallOption, 0)
 	for key, value := range args {
 		option, ok := o[key]

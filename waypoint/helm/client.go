@@ -6,12 +6,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"context"
-	"crypto/tls"
-
 	"bytes"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/kylie-a/requests"
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/helm/pkg/chartutil"
