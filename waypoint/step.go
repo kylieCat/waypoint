@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"path/filepath"
-	"k8s.io/helm/pkg/repo"
+	"context"
 )
 
 type Step struct {
@@ -121,11 +120,10 @@ var DefaultSteps = []Step{
 		},
 		Action: func(r Release) error {
 			//helm repo index manifests/${app} --url ${repo_url}
-			path, err := filepath.Abs(r.deploy.GetHelmChartDir())
-			if err != nil {
-				return err
-			}
-			return index(path, r.deploy.GetHelmPostURL(), "")
+			src := r.deploy.GetHelmChartDir()
+			baseURL := r.deploy.GetHelmPostURL()
+
+			return r.helm.UpdateIndex(src, baseURL)
 		},
 		ExitOnErr: false,
 		ShouldExecute: func(r Release) bool {
@@ -150,7 +148,14 @@ var DefaultSteps = []Step{
 			return fmt.Sprintf("Installing chart %s...", green(appVer))
 		},
 		Action: func(r Release) error {
+			var cancel context.CancelFunc
+			var err error
+
 			src := r.GetHelmPackagePath(r.newVersion.SemVer())
+			if cancel, err = r.k8s.StartForwarder(); err != nil {
+				return err
+			}
+			defer cancel()
 			return r.helm.Install(src, "sre", map[string]interface{}{})
 		},
 		ExitOnErr: true,
@@ -164,7 +169,14 @@ var DefaultSteps = []Step{
 			return fmt.Sprintf("Updating release %s...", green(appVer))
 		},
 		Action: func(r Release) error {
+			var cancel context.CancelFunc
+			var err error
+
 			src := r.deploy.GetHelmPackagePath(r.newVersion.SemVer())
+			if cancel, err = r.k8s.StartForwarder(); err != nil {
+				return err
+			}
+			defer cancel()
 			return r.helm.Upgrade(r.App(), src)
 		},
 		ExitOnErr: true,
@@ -172,29 +184,4 @@ var DefaultSteps = []Step{
 			return true
 		},
 	},
-}
-
-func index(dir, url, mergeTo string) error {
-	out := filepath.Join(dir, "index.yaml")
-
-	i, err := repo.IndexDirectory(dir, url)
-	if err != nil {
-		return err
-	}
-	if mergeTo != "" {
-		// if index.yaml is missing then create an empty one to merge into
-		var i2 *repo.IndexFile
-		if _, err := os.Stat(mergeTo); os.IsNotExist(err) {
-			i2 = repo.NewIndexFile()
-			i2.WriteFile(mergeTo, 0644)
-		} else {
-			i2, err = repo.LoadIndexFile(mergeTo)
-			if err != nil {
-				return fmt.Errorf("merge failed: %s", err)
-			}
-		}
-		i.Merge(i2)
-	}
-	i.SortEntries()
-	return i.WriteFile(out, 0644)
 }

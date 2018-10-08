@@ -1,9 +1,54 @@
 package helm
 
 import (
-	"k8s.io/helm/pkg/helm"
+	"context"
+	"crypto/tls"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
+	"k8s.io/helm/pkg/helm"
+	"k8s.io/helm/pkg/helm/helmpath"
 )
+
+type HelmOption func(client *Client)
+
+func HelmHost(host string) HelmOption {
+	return func(client *Client) {
+		client.tillerOpts = append(client.tillerOpts, helm.Host(host))
+	}
+}
+
+func HelmWithTLS(cfg *tls.Config) HelmOption {
+	return func(client *Client) {
+		client.tillerOpts = append(client.tillerOpts, helm.WithTLS(cfg))
+	}
+}
+
+func HelmBeforeCall(fn func(context.Context, proto.Message) error) HelmOption {
+	return func(client *Client) {
+		client.tillerOpts = append(client.tillerOpts, helm.BeforeCall(fn))
+	}
+}
+
+func HelmConnectTimeout(timeout int64) HelmOption {
+	return func(client *Client) {
+		client.tillerOpts = append(client.tillerOpts, helm.ConnectTimeout(timeout))
+	}
+}
+
+func HelmHome(value string) HelmOption {
+	return func(client *Client) {
+		path, _ := homedir.Expand(value)
+		client.env.Home = helmpath.Home(path)
+	}
+}
+
+func HelmToken(value string) HelmOption {
+	return func(client *Client) {
+		client.token = value
+	}
+}
 
 type InstallOption interface {
 	Get() helm.InstallOption
@@ -152,18 +197,18 @@ func (o optionsMap) Get(optName string) InstallOption {
 }
 
 var optMap = optionsMap{
-	"valueOverrides": ValueOverrides{},
-	"releaseName": ReleaseName{},
-	"installTimeout": InstallTimeout{},
-	"installWait": InstallWait{},
-	"installDescription": InstallDescription{},
-	"installDryRun": InstallDryRun{},
-	"installDisableHooks": InstallDisableHooks{},
+	"valueOverrides":        ValueOverrides{},
+	"releaseName":           ReleaseName{},
+	"installTimeout":        InstallTimeout{},
+	"installWait":           InstallWait{},
+	"installDescription":    InstallDescription{},
+	"installDryRun":         InstallDryRun{},
+	"installDisableHooks":   InstallDisableHooks{},
 	"installDisableCRDHook": InstallDisableCRDHook{},
-	"installReuseName": InstallReuseName{},
+	"installReuseName":      InstallReuseName{},
 }
 
-func(o optionsMap) getOptions(args map[string]interface{}) []helm.InstallOption {
+func (o optionsMap) getOptions(args map[string]interface{}) []helm.InstallOption {
 	out := make([]helm.InstallOption, 0)
 	for key, value := range args {
 		option, ok := o[key]

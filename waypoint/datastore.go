@@ -3,10 +3,11 @@ package waypoint
 import (
 	"context"
 
+	"log"
+
 	"cloud.google.com/go/datastore"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"log"
 )
 
 type WaypointStoreDS struct {
