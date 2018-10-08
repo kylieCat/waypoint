@@ -1,24 +1,25 @@
 package k8s
 
 import (
-	"k8s.io/helm/pkg/kube"
-	"github.com/kylie-a/requests"
+	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os/exec"
-	"context"
-	"net/http"
-	"crypto/tls"
+
+	"github.com/kylie-a/requests"
+	"k8s.io/helm/pkg/kube"
 )
 
 // Routes
 const (
 	ListPodsTemplate = "/api/v1/namespaces/%s/pods"
-	GetPodTemplate = "/api/v1/namespaces/%s/pods/%s"
+	GetPodTemplate   = "/api/v1/namespaces/%s/pods/%s"
 )
 
 type Metadata struct {
-	Name string `json:"name" yaml:"name"` 
+	Name string `json:"name" yaml:"name"`
 }
 
 type Pod struct {
@@ -30,13 +31,15 @@ type ListPodsResponse struct {
 }
 
 type Client struct {
-	k8s *kube.Client
-	endpoint string
-	namespace string
-	context string
-	labels []string
-	token string
-	http *requests.Client
+	k8s        *kube.Client
+	endpoint   string
+	namespace  string
+	context    string
+	labels     []string
+	token      string
+	http       *requests.Client
+	hostPort   int
+	targetPort int
 }
 
 func NewClient(opts ...Option) *Client {
@@ -45,15 +48,21 @@ func NewClient(opts ...Option) *Client {
 	}
 	hc := &http.Client{Transport: tr}
 	client := &Client{
-		k8s: nil,
-		namespace: "kube-system",
-		labels: []string{"app=helm", "name=tiller"},
-		http: requests.NewClient(requests.CustomClient(hc)),
+		k8s:        nil,
+		namespace:  "kube-system",
+		labels:     []string{"app=helm", "name=tiller"},
+		http:       requests.NewClient(requests.CustomClient(hc)),
+		hostPort:   8081,
+		targetPort: 44134,
 	}
+	return client.ApplyOptions(opts...)
+}
+
+func (c *Client) ApplyOptions(opts ...Option) *Client {
 	for _, opt := range opts {
-		opt(client)
+		opt(c)
 	}
-	return client
+	return c
 }
 
 func (c *Client) GetTillerPod() (string, error) {
@@ -91,7 +100,7 @@ func (c *Client) StartForwarder() (context.CancelFunc, error) {
 		c.context,
 		"port-forward",
 		podName,
-		"8081:44134",
+		fmt.Sprintf("%d:%d", c.hostPort, c.targetPort),
 	}
 	go func() {
 		//fmt.Println("[debug] SERVER: localhost:8081")
