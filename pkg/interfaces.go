@@ -13,9 +13,20 @@ type RecordList interface {
 	sort.Interface
 }
 
-type DataBase interface {
-	GetMostRecent(app string) (*Version, error)
-	ListAll(app string) (Versions, error)
-	NewVersion(app string, version *Version) error
+type BackendConf interface {
+	GetKind() BackendKind
+	GetAuth() BackendAuthConf
+	//yaml.Unmarshaler
+	//json.Unmarshaler
+}
+
+type BackendAuthConf interface {
+	GetKind() GCPAuthKind
+}
+
+type BackendService interface {
+	GetLatest(app string) (*Version, error)
+	All(app string) (Versions, error)
+	Save(app string, version *Version) error
 	AddApplication(name string, initialVersion string) error
 }

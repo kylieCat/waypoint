@@ -7,16 +7,21 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/go-homedir"
-	"google.golang.org/api/option"
 	"gopkg.in/yaml.v2"
+	"encoding/json"
 )
 
-type AuthKind string
+type GCPAuthKind string
+type BackendKind string
 
 const (
-	ApiKey    AuthKind = "apiKey"
-	CredsFile AuthKind = "credsFile"
-	chartsAPI          = "/api/charts"
+	DataStore BackendKind = "datastore"
+	Bolt      BackendKind = "bolt"
+	MongoDB   BackendKind = "mongo"
+	Dynamo    BackendKind = "dynamo"
+	ApiKey    GCPAuthKind = "apiKey"
+	CredsFile GCPAuthKind = "credsFile"
+	chartsAPI             = "/api/charts"
 )
 
 type TillerConf struct {
@@ -115,49 +120,44 @@ func (d Deployment) SaveHelmLocal() bool {
 
 type Deployments map[string]Deployment
 
-type Auth struct {
-	Kind    AuthKind `json:"kind" yaml:"kind"`
-	Project string   `json:"project" yaml:"project"`
-	Value   string   `json:"value" yaml:"value"`
+type Backend struct {
+	Kind BackendKind `json:"kind" yaml:"kind"`
+	Conf map[string]string `json:"conf" yaml:"conf"`
 }
 
 type Config struct {
-	Auth        Auth        `json:"auth" yaml:"auth"`
+	Backend     *Backend `json:"backend" yaml:"backend"`
 	Deployments Deployments `json:"deployments" yaml:"deployments"`
 }
 
 func (c Config) GetDeployment(dep string) Deployment {
 	d, ok := c.Deployments[dep]
 	if !ok {
-		fmt.Printf("deploymetn %s not configured", dep)
+		fmt.Printf("deployment %s not configured", dep)
 		os.Exit(2)
 	}
 	return d
 }
 
-func (c Config) GetAuth() option.ClientOption {
-	switch c.Auth.Kind {
-	case ApiKey:
-		return option.WithAPIKey(c.Auth.Value)
-	case CredsFile:
-		return option.WithCredentialsFile(c.Auth.Value)
-	default:
-		return nil
-	}
-}
-
-func GetConf(fileName string) *Config {
+func GetConf(fileName string) (*Config, error) {
+	extension := filepath.Ext(fileName)
 	conf := new(Config)
 	fileName, err := homedir.Expand(fileName)
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		fmt.Println(err.Error())
-		return nil
+		return nil, err
 	}
-	err = yaml.Unmarshal(b, &conf)
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil
+	switch extension {
+	case ".yaml":
+		err = yaml.Unmarshal(b, &conf)
+		if err != nil {
+			return nil, err
+		}
+	case ".json":
+		err = json.Unmarshal(b, &conf)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return conf
+	return conf, nil
 }
