@@ -1,0 +1,41 @@
+{
+  "backend": {
+    "kind": "datastore",
+    "auth": {
+      "kind": "credsFile",
+      "project": "test",
+      "value": "~/.gcp/isolated/test.json"
+    }
+  },
+  "deployments": {
+    "stage": {
+      "app": "onboarding",
+      "cleanup": true,
+      "project": "test",
+      "docker": {
+        "repo": "gcr.io/test",
+        "creds": "docker-credentials-gcr",
+        "context": "~/repos/onboarding",
+        "file": "~/repos/onboarding/Dockerfile"
+      },
+      "helm": {
+        "name": "https://chartmuseum",
+        "chartDir": "~/repos/onboarding/manifests/onboarding",
+        "destDir": "~/repos/onboarding/manifests",
+        "save": true,
+        "set": [
+          "image.tag=${VERSION}"
+        ]
+      },
+      "tiller": {
+        "namespace": "kube-system",
+        "context": "test",
+        "endpoint": "https://api.k8s",
+        "labels": [
+          "app=helm",
+          "name=tiller"
+        ]
+      }
+    }
+  }
+}
