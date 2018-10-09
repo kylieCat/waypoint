@@ -7,9 +7,9 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/kylie-a/waypoint/pkg"
+	"github.com/mitchellh/go-homedir"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
-	"github.com/mitchellh/go-homedir"
 )
 
 type WaypointStoreDS struct {

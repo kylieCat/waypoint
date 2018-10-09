@@ -6,9 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"encoding/json"
+
 	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
-	"encoding/json"
 )
 
 type GCPAuthKind string
@@ -121,12 +122,12 @@ func (d Deployment) SaveHelmLocal() bool {
 type Deployments map[string]Deployment
 
 type Backend struct {
-	Kind BackendKind `json:"kind" yaml:"kind"`
+	Kind BackendKind       `json:"kind" yaml:"kind"`
 	Conf map[string]string `json:"conf" yaml:"conf"`
 }
 
 type Config struct {
-	Backend     *Backend `json:"backend" yaml:"backend"`
+	Backend     *Backend    `json:"backend" yaml:"backend"`
 	Deployments Deployments `json:"deployments" yaml:"deployments"`
 }
 
