@@ -34,7 +34,7 @@ var setCmd = &cobra.Command{
 			os.Exit(2)
 		}
 		version := pkg.NewVersion(parts[pkg.MAJOR], parts[pkg.MINOR], parts[pkg.PATCH])
-		err = db.NewVersion(args[0], &version)
+		err = ws.Save(args[0], &version)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

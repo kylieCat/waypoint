@@ -28,7 +28,7 @@ var bumpCmd = &cobra.Command{
 	the other parts of the version to 0 (1.3.5 -> 2.0.0).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		appName := args[0]
-		version, err := db.GetMostRecent(appName)
+		version, err := ws.GetLatest(appName)
 		checkErr(err, true, false)
 		releaseType := getReleaseType(cmd)
 		newVersion := bumpVersion(appName, *version, releaseType)
