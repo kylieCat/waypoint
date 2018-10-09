@@ -2,14 +2,11 @@ package k8s
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os/exec"
 
 	"github.com/kylie-a/requests"
-	"k8s.io/helm/pkg/kube"
 )
 
 // Routes
@@ -31,7 +28,6 @@ type ListPodsResponse struct {
 }
 
 type Client struct {
-	k8s        *kube.Client
 	endpoint   string
 	namespace  string
 	context    string
@@ -43,15 +39,10 @@ type Client struct {
 }
 
 func NewClient(opts ...Option) *Client {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	hc := &http.Client{Transport: tr}
 	client := &Client{
-		k8s:        nil,
 		namespace:  "kube-system",
 		labels:     []string{"app=helm", "name=tiller"},
-		http:       requests.NewClient(requests.CustomClient(hc)),
+		http:       requests.NewClient(),
 		hostPort:   8081,
 		targetPort: 44134,
 	}
