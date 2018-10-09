@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kylie-a/waypoint/pkg"
 	"os"
 	"text/template"
+
+	"github.com/kylie-a/waypoint/pkg"
 )
 
 const (

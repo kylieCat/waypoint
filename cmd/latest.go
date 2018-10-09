@@ -28,7 +28,7 @@ var latestCmd = &cobra.Command{
 	Short: "Get the latest version for an app",
 	Long:  `Gets the latest version for the provided appplication name. This gets the latest version by date.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		latest, err := db.GetMostRecent(args[0])
+		latest, err := ws.GetLatest(args[0])
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

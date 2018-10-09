@@ -1,7 +1,9 @@
-auth:
-  kind: credsFile
-  project: test
-  value: ~/.gcp/isolated/test.json
+backend:
+  kind: datastore
+  conf:
+    kind: credsFile
+    project: test
+    value: ~/.gcp/isolated/test.json
 deployments:
   stage:
     app: onboarding
@@ -24,5 +26,5 @@ deployments:
       context: test
       endpoint: https://api.k8s
       labels:
-        app: helm
-        name: tiller
+      - app=helm
+      - name=tiller

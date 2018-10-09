@@ -1,8 +1,6 @@
 package pkg
 
 import (
-	"os"
-
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -13,8 +11,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-var db DataBase
-
 type Release struct {
 	conf        *Config
 	deploy      Deployment
@@ -24,6 +20,7 @@ type Release struct {
 	docker      *docker.Client
 	helm        *helm.Client
 	k8s         *k8s.Client
+	ws          BackendService
 }
 
 func (r Release) Do(steps []Step) {
@@ -104,31 +101,27 @@ func (r Release) SaveHelmLocal() bool {
 	return r.deploy.Helm.Save
 }
 
-func NewRelease(conf *Config, target string, typ ReleaseType) Release {
-	var newVer *Version
+func (r *Release) ApplyOptions(opts ...ReleaseOption) *Release {
+	for _, opt := range opts {
+		opt(r)
+	}
+	return r
+}
 
-	db = NewWaypointStoreDS(conf.Auth.Project, conf.GetAuth())
+func NewRelease(conf *Config, target string, typ ReleaseType, opts ...ReleaseOption) *Release {
 	deploy := conf.GetDeployment(target)
-	prevVer, err := db.GetMostRecent(deploy.App)
-	checkErr(err, true, false)
-	newVer = prevVer.Bump(typ)
 	dockerClient, err := docker.NewDockerClient()
 	checkErr(err, true, false)
-	helmClient := helm.NewHelmClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
-	k8sClient := k8s.NewClient(
-		k8s.Token(os.Getenv("K8S_TOKEN")),
-		k8s.Endpoint(deploy.Tiller.Endpoint),
-		k8s.Context(deploy.Tiller.Context),
-		k8s.Labels(deploy.Tiller.Labels),
-	)
-	return Release{
-		conf:        conf,
-		deploy:      deploy,
-		typ:         typ,
-		prevVersion: prevVer,
-		newVersion:  newVer,
-		docker:      dockerClient,
-		helm:        helmClient,
-		k8s:         k8sClient,
+	helmClient := helm.NewClient()
+	k8sClient := k8s.NewClient()
+	release := &Release{
+		conf:   conf,
+		deploy: deploy,
+		docker: dockerClient,
+		helm:   helmClient,
+		k8s:    k8sClient,
+		typ:    typ,
 	}
+	release.ApplyOptions(opts...)
+	return release
 }

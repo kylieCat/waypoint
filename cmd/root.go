@@ -33,7 +33,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".pkg.yaml", "config file (default is .pkg.yaml)")
-	conf = pkg.GetConf(cfgFile)
+	var err error
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is .waypoint.yaml)")
+	if conf, err = pkg.GetConf(cfgFile); err != nil {
+		fmt.Println(err.Error())
+		os.Exit(2)
+	}
 	InitDB(conf)
 }

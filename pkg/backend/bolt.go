@@ -1,4 +1,4 @@
-package pkg
+package backend
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/boltdb/bolt"
+	"github.com/kylie-a/waypoint/pkg"
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -37,14 +38,14 @@ type WaypointStoreBolt struct {
 	DBFilePath string `json:"db_file_path"`
 }
 
-func NewWaypointStoreBolt() DataBase {
+func NewWaypointStoreBolt(conf *pkg.Config) WaypointStoreBolt {
 	return WaypointStoreBolt{
-		DBFilePath: "/Users/iana/.waypt/waypt.db",
+		DBFilePath: "/Users/iana/.waypt/waypt.backend",
 	}
 }
 
-func (wp WaypointStoreBolt) GetMostRecent(app string) (*Version, error) {
-	versions, err := wp.ListAll(app)
+func (wp WaypointStoreBolt) GetLatest(app string) (*pkg.Version, error) {
+	versions, err := wp.All(app)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (wp WaypointStoreBolt) GetMostRecent(app string) (*Version, error) {
 	return &versions[versionCount-1], err
 }
 
-func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
+func (wp WaypointStoreBolt) All(app string) (pkg.Versions, error) {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -73,9 +74,9 @@ func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
 		})
 		return nil
 	})
-	versions := make(Versions, len(raw))
+	versions := make(pkg.Versions, len(raw))
 	for idx, r := range raw {
-		var version Version
+		var version pkg.Version
 		err := msgpack.Unmarshal(r, &version)
 		if err != nil {
 			return nil, err
@@ -86,7 +87,7 @@ func (wp WaypointStoreBolt) ListAll(app string) (Versions, error) {
 	return versions, err
 }
 
-func (wp WaypointStoreBolt) NewVersion(app string, version *Version) error {
+func (wp WaypointStoreBolt) Save(app string, version *pkg.Version) error {
 	db, err := getDB(wp.DBFilePath, 0600, nil)
 	if err != nil {
 		return err
@@ -127,11 +128,11 @@ func (wp WaypointStoreBolt) AddApplication(name string, initialVersion string) e
 	db, err = getDB(wp.DBFilePath, 0600, nil)
 	defer db.Close()
 	return db.Update(func(tx *bolt.Tx) error {
-		parts, err := GetPartsFromSemVer(initialVersion)
+		parts, err := pkg.GetPartsFromSemVer(initialVersion)
 		if err != nil {
 			return err
 		}
-		newVersion := NewVersion(parts[MAJOR], parts[MINOR], parts[PATCH])
-		return wp.NewVersion(name, &newVersion)
+		newVersion := pkg.NewVersion(parts[pkg.MAJOR], parts[pkg.MINOR], parts[pkg.PATCH])
+		return wp.Save(name, &newVersion)
 	})
 }

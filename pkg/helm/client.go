@@ -29,7 +29,7 @@ type Client struct {
 	token        string
 }
 
-func NewHelmClient(opts ...HelmOption) *Client {
+func NewClient(opts ...HelmOption) *Client {
 	var err error
 	var homeDir string
 

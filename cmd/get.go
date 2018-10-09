@@ -28,7 +28,7 @@ var getCmd = &cobra.Command{
 	Short: "Get all versions for an app",
 	Long:  `The get command will list out all available versions for an app in yaml format.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		versions, err := db.ListAll(args[0])
+		versions, err := ws.All(args[0])
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

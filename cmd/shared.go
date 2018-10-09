@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kylie-a/waypoint/pkg"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/kylie-a/waypoint/pkg"
+	"github.com/kylie-a/waypoint/pkg/backend"
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -20,10 +22,15 @@ var (
 	DONE = fmt.Sprintf("%sDONE!%s", GREEN, COLOR_OFF)
 )
 
-var db pkg.DataBase
+var ws pkg.BackendService
 
 func InitDB(conf *pkg.Config) {
-	db = pkg.NewWaypointStoreDS(conf.Auth.Project, conf.GetAuth())
+	var err error
+
+	if ws, err = backend.NewClient(conf); err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(ws)
 }
 
 func colorPrint(color, msg string) string {
@@ -96,6 +103,6 @@ func bumpVersion(appName string, version pkg.Version, releaseType pkg.ReleaseTyp
 	case pkg.Patch:
 		newVersion = version.BumpPatch()
 	}
-	checkErr(db.NewVersion(appName, &newVersion), true, false)
+	checkErr(ws.Save(appName, &newVersion), true, false)
 	return &newVersion
 }

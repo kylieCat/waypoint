@@ -17,8 +17,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // newCmd represents the new command
@@ -29,7 +30,7 @@ var newCmd = &cobra.Command{
 	--initial option`,
 	Run: func(cmd *cobra.Command, args []string) {
 		initial := cmd.Flag("initial").Value.String()
-		err := db.AddApplication(args[0], initial)
+		err := ws.AddApplication(args[0], initial)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

@@ -15,7 +15,16 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
+	"crypto/tls"
+	"net/http"
+
 	"github.com/kylie-a/waypoint/pkg"
+	"github.com/kylie-a/waypoint/pkg/docker"
+	"github.com/kylie-a/waypoint/pkg/helm"
+	"github.com/kylie-a/waypoint/pkg/k8s"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +44,44 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		releaseType := getReleaseType(cmd)
-		release := pkg.NewRelease(conf, target, releaseType)
+		deploy := conf.GetDeployment(target)
+
+		tr := http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		httpClient := &http.Client{Transport: &tr}
+		helmClient := helm.NewClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
+		k8sClient := k8s.NewClient(
+			k8s.Token(os.Getenv("K8S_TOKEN")),
+			k8s.Endpoint(deploy.Tiller.Endpoint),
+			k8s.Context(deploy.Tiller.Context),
+			k8s.Labels(deploy.Tiller.Labels),
+			k8s.HTTPClient(httpClient),
+		)
+		dockerClient, err := docker.NewDockerClient()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		prevVer, err := ws.GetLatest(deploy.App)
+		checkErr(err, true, false)
+		newVer := prevVer.Bump(releaseType)
+		if err := ws.Save(deploy.App, newVer); err != nil {
+			checkErr(err, true, false)
+		}
+		release := pkg.NewRelease(
+			conf,
+			target,
+			releaseType,
+			pkg.Helm(helmClient),
+			pkg.K8s(k8sClient),
+			pkg.Docker(dockerClient),
+			pkg.DB(ws),
+			pkg.PrevVersion(prevVer),
+			pkg.CurrentVersion(newVer),
+		)
 		release.Do(pkg.DefaultSteps)
 	},
 }
