@@ -30,7 +30,6 @@ func InitDB(conf *pkg.Config) {
 	if ws, err = backend.NewClient(conf); err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Println(ws)
 }
 
 func colorPrint(color, msg string) string {
