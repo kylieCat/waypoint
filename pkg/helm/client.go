@@ -61,7 +61,7 @@ func (c *Client) RemoveChart(app, repoName, version string) error {
 	if url, err = c.getHelmDeleteURL(app, repoName, version); err != nil {
 		return err
 	}
-	if resp, err = requests.Delete(url, requests.WithBasicAuth(c.token)); err != nil {
+	if resp, err = requests.Delete(url); err != nil {
 		return err
 	}
 	if resp.Code != 200 {
@@ -92,7 +92,7 @@ func (c *Client) HasChart(app, repoName, version string) bool {
 	var err error
 
 	url, err := c.getHelmDeleteURL(app, repoName, version)
-	if resp, err = requests.Get(url, requests.WithBasicAuth(c.token)); err != nil {
+	if resp, err = requests.Get(url); err != nil {
 		return false
 	}
 	return resp.Code == 200
@@ -155,6 +155,7 @@ func (c *Client) Install(src, ns string, opts map[string]interface{}) error {
 		return err
 	}
 	installOpts := optMap.getOptions(opts)
+	fmt.Println(installOpts)
 	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns, installOpts...); err != nil {
 		return err
 	}

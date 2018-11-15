@@ -250,7 +250,7 @@
   branch = "master"
   name = "github.com/kylie-a/requests"
   packages = ["."]
-  revision = "4007da5eac2706866ed4ffd9b247e6f276507afe"
+  revision = "f45f37f12ccd16d4a1e08dea9cf44f40bb35baaa"
 
 [[projects]]
   name = "github.com/mitchellh/go-homedir"
@@ -291,8 +291,8 @@
     ".",
     "codes"
   ]
-  revision = "935c5b540faab4d4922ae6f1fddcf77a726f259c"
-  version = "v4.0.0"
+  revision = "c4fc0fcdd500af473157759b6d73f935e727ec77"
+  version = "v4.0.1"
 
 [[projects]]
   name = "go.opencensus.io"

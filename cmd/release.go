@@ -54,7 +54,6 @@ to quickly create a Cobra application.`,
 		httpClient := &http.Client{Transport: &tr}
 		helmClient := helm.NewClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
 		k8sClient := k8s.NewClient(
-			k8s.Token(os.Getenv("K8S_TOKEN")),
 			k8s.Endpoint(deploy.Tiller.Endpoint),
 			k8s.Context(deploy.Tiller.Context),
 			k8s.Labels(deploy.Tiller.Labels),

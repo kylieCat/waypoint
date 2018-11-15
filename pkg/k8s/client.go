@@ -6,7 +6,11 @@ import (
 	"net/url"
 	"os/exec"
 
+	"io/ioutil"
+
 	"github.com/kylie-a/requests"
+	"github.com/mitchellh/go-homedir"
+	"gopkg.in/yaml.v2"
 )
 
 // Routes
@@ -62,7 +66,8 @@ func (c *Client) GetTillerPod() (string, error) {
 
 	route := c.formatURL(ListPodsTemplate, c.namespace)
 	params := c.getParamsFromLabels()
-	if resp, err = c.http.Get(route, requests.WithBasicAuth(c.token), requests.WithQueryParams(params)); err != nil {
+	fmt.Println(getAccessToken(c.context))
+	if resp, err = c.http.Get(route, requests.WithBearerToken(getAccessToken(c.context)), requests.WithQueryParams(params)); err != nil {
 		return "", err
 	}
 	var listResp ListPodsResponse
@@ -115,4 +120,94 @@ func (c *Client) getParamsFromLabels() url.Values {
 func (c *Client) formatURL(url string, args ...interface{}) string {
 	url = fmt.Sprintf(url, args...)
 	return fmt.Sprintf("%s%s", c.endpoint, url)
+}
+
+var conf *k8sConf
+
+type clusterConf struct {
+	CertificateAuthorityData string `yaml:"certificate-authority-data"`
+	Server                   string `yaml:"server"`
+}
+
+type cluster struct {
+	Cluster clusterConf `yaml:"cluster"`
+	Name    string      `yaml:"name"`
+}
+
+type k8sContextConf struct {
+	Cluster   string `yaml:"cluster"`
+	Namespace string `yaml:"namespace"`
+	User      string `yaml:"user"`
+}
+
+type k8sContext struct {
+	Context k8sContextConf `yaml:"context"`
+	Name    string         `yaml:"name"`
+}
+
+type authProviderConfig struct {
+	AccessToken string `yaml:"access-token"`
+	CmdArgs     string `yaml:"cmd-args"`
+	CmdPath     string `yaml:"cmd-path"`
+	Expiry      string `yaml:"expiry"`
+	ExpiryKey   string `yaml:"expiry-key"`
+	TokenKey    string `yaml:"token-key"`
+}
+
+type authProvider struct {
+	Config authProviderConfig `yaml:"config"`
+	Name   string             `yaml:"name"`
+}
+
+type k8sUser struct {
+	AuthProvider authProvider `yaml:"auth-provider"`
+}
+
+type userConf struct {
+	User k8sUser `yaml:"user"`
+	Name string  `yaml:"name"`
+}
+
+type k8sConf struct {
+	ApiVersion     string       `yaml:"apiVersion"`
+	Clusters       []cluster    `yaml:"clusters"`
+	Contexts       []k8sContext `yaml:"contexts"`
+	CurrentContext string       `yaml:"current-context"`
+	Kind           string       `yaml:"kind"`
+	Preferences    interface{}  `yaml:"preferences"`
+	Users          []userConf   `yaml:"users"`
+}
+
+func getConf() *k8sConf {
+	if conf == nil {
+		fileName, err := homedir.Expand("~/.kube/config")
+		b, _ := ioutil.ReadFile(fileName)
+
+		err = yaml.Unmarshal(b, &conf)
+		if err != nil {
+			fmt.Printf("ERROR: %s", err.Error())
+			return conf
+		}
+	}
+	return conf
+}
+
+func GetCurrentContext() string {
+	conf := getConf()
+	return conf.CurrentContext
+}
+
+func getAccessToken(ctxName string) string {
+	conf := getConf()
+	for _, ctx := range conf.Contexts {
+		if ctx.Name == ctxName {
+			userKey := ctx.Context.User
+			for _, user := range conf.Users {
+				if user.Name == userKey {
+					return user.User.AuthProvider.Config.AccessToken
+				}
+			}
+		}
+	}
+	return ""
 }

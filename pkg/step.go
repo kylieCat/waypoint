@@ -160,7 +160,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return true
 		},
 	},
 	{
@@ -181,7 +181,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return true
+			return false
 		},
 	},
 }
