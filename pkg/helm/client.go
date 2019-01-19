@@ -16,6 +16,7 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/helm/helmpath"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+	rls "k8s.io/helm/pkg/proto/hapi/services"
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/repo"
 )
@@ -27,6 +28,7 @@ type Client struct {
 	tillerOpts   []helm.Option
 	env          environment.EnvSettings
 	token        string
+	debug        bool
 }
 
 func NewClient(opts ...HelmOption) *Client {
@@ -45,6 +47,7 @@ func NewClient(opts ...HelmOption) *Client {
 	client := &Client{
 		tillerClient: tillerClient,
 		env:          env,
+		debug: false,
 	}
 	for _, opt := range opts {
 		opt(client)
@@ -154,24 +157,24 @@ func (c *Client) Install(src, ns string, opts map[string]interface{}) error {
 	if ch, err = chartutil.LoadFile(src); err != nil {
 		return err
 	}
-	installOpts := optMap.getOptions(opts)
-	fmt.Println(installOpts)
-	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns, installOpts...); err != nil {
+	// installOpts := optMap.getOptions(opts)
+	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Client) Upgrade(app, src string) error {
-	var ch *chart.Chart
+func (c *Client) Upgrade(app, src string, opts map[string]interface{}) error {
+	//var ch *chart.Chart
+	var rel *rls.UpdateReleaseResponse
 	var err error
 
-	if ch, err = chartutil.LoadFile(src); err != nil {
+	if rel, err = c.tillerClient.UpdateRelease(app, src); err != nil {
 		return err
 	}
 
-	if _, err = c.tillerClient.UpdateReleaseFromChart(app, ch); err != nil {
-		return err
+	if c.debug {
+		printRelease(os.Stdout, rel.Release)
 	}
 	return nil
 }
@@ -188,7 +191,6 @@ func (c *Client) UpdateRepo(repoName string) error {
 }
 
 func (c *Client) UpdateRepos() error {
-	// helm repo update
 	var f *repo.RepoFile
 	var r *repo.ChartRepository
 	var err error
@@ -207,13 +209,11 @@ func (c *Client) UpdateRepos() error {
 }
 
 func (c *Client) UpdateIndex(chartSrc, baseURL string) error {
-	//helm repo index manifests/${app} --url ${repo_url}
 	path, err := filepath.Abs(chartSrc)
 	if err != nil {
 		return err
 	}
 	return c.index(path, baseURL, "")
-	return err
 }
 
 func (c *Client) getHelmRepos() (*repo.RepoFile, error) {
@@ -277,7 +277,9 @@ func (c *Client) updateRepo(repo *repo.ChartRepository, home helmpath.Home) {
 	if repo.Config.Name == "local" {
 		return
 	}
-	repo.DownloadIndexFile(home.Cache())
+	if err := repo.DownloadIndexFile(home.Cache()); err != nil {
+		fmt.Println(err.Error())
+	}
 }
 
 func (c *Client) updateRepos(repos []*repo.ChartRepository, home helmpath.Home) {
@@ -304,7 +306,9 @@ func (c *Client) index(dir, url, mergeTo string) error {
 		var i2 *repo.IndexFile
 		if _, err := os.Stat(mergeTo); os.IsNotExist(err) {
 			i2 = repo.NewIndexFile()
-			i2.WriteFile(mergeTo, 0644)
+			if err := i2.WriteFile(mergeTo, 0644); err != nil {
+				return err
+			}
 		} else {
 			i2, err = repo.LoadIndexFile(mergeTo)
 			if err != nil {

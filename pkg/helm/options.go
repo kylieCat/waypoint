@@ -50,6 +50,12 @@ func HelmToken(value string) HelmOption {
 	}
 }
 
+func HelmDebug() HelmOption {
+	return func(client *Client) {
+		client.debug = true
+	}
+}
+
 type InstallOption interface {
 	Get() helm.InstallOption
 	Set(value interface{}) error

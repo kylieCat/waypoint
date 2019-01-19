@@ -32,6 +32,8 @@ func (s Step) Execute(r Release) {
 	}
 }
 
+const shouldBuild = true
+
 var DefaultSteps = []Step{
 	{
 		StartMesg: func(r Release) string {
@@ -43,7 +45,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: false,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return shouldBuild
 		},
 	},
 	{
@@ -68,7 +70,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return shouldBuild
 		},
 	},
 	{
@@ -81,7 +83,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return shouldBuild
 		},
 	},
 	{
@@ -160,7 +162,7 @@ var DefaultSteps = []Step{
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return true
+			return false
 		},
 	},
 	{
@@ -177,11 +179,13 @@ var DefaultSteps = []Step{
 				return err
 			}
 			defer cancel()
-			return r.helm.Upgrade(r.App(), src)
+
+			app := r.App()
+			return r.helm.Upgrade(app, src, map[string]interface{}{})
 		},
 		ExitOnErr: true,
 		ShouldExecute: func(r Release) bool {
-			return false
+			return true
 		},
 	},
 }

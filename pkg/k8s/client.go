@@ -2,11 +2,12 @@ package k8s
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os/exec"
-
-	"io/ioutil"
+	"strings"
 
 	"github.com/kylie-a/requests"
 	"github.com/mitchellh/go-homedir"
@@ -66,7 +67,7 @@ func (c *Client) GetTillerPod() (string, error) {
 
 	route := c.formatURL(ListPodsTemplate, c.namespace)
 	params := c.getParamsFromLabels()
-	fmt.Println(getAccessToken(c.context))
+
 	if resp, err = c.http.Get(route, requests.WithBearerToken(getAccessToken(c.context)), requests.WithQueryParams(params)); err != nil {
 		return "", err
 	}
@@ -98,11 +99,12 @@ func (c *Client) StartForwarder() (context.CancelFunc, error) {
 		podName,
 		fmt.Sprintf("%d:%d", c.hostPort, c.targetPort),
 	}
+
 	go func() {
-		//fmt.Println("[debug] SERVER: localhost:8081")
+		//fmt.Printf("[debug] SERVER: localhost:%s\n", c.hostPort)
 		//fmt.Printf("[debug] ARGS: %v\n", args)
 		if err := exec.CommandContext(ctx, "kubectl", args...).Run(); err != nil {
-			fmt.Println(err.Error())
+			fmt.Printf("ERROR: %s\n", err.Error())
 			cancel()
 		}
 	}()
@@ -178,6 +180,14 @@ type k8sConf struct {
 	Users          []userConf   `yaml:"users"`
 }
 
+type creds struct {
+	AccessToken string `json:"access_token" yaml:"access_token" `
+}
+
+type gcloudConf struct {
+	Credential creds `json:"credential" yaml:"credential" `
+}
+
 func getConf() *k8sConf {
 	if conf == nil {
 		fileName, err := homedir.Expand("~/.kube/config")
@@ -198,13 +208,26 @@ func GetCurrentContext() string {
 }
 
 func getAccessToken(ctxName string) string {
+	var out []byte
+	var err error
+
 	conf := getConf()
 	for _, ctx := range conf.Contexts {
 		if ctx.Name == ctxName {
 			userKey := ctx.Context.User
 			for _, user := range conf.Users {
 				if user.Name == userKey {
-					return user.User.AuthProvider.Config.AccessToken
+					authConfig := user.User.AuthProvider.Config
+					args := strings.Split(authConfig.CmdArgs, " ")
+					if out, err = exec.Command(authConfig.CmdPath, args...).Output(); err != nil {
+						fmt.Println(err.Error())
+					}
+					var creds gcloudConf
+					if err := json.Unmarshal(out, &creds); err != nil {
+						fmt.Println(err.Error())
+						return ""
+					}
+					return creds.Credential.AccessToken
 				}
 			}
 		}
