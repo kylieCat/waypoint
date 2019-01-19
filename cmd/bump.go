@@ -28,11 +28,10 @@ var bumpCmd = &cobra.Command{
 	which part of the verison should be incremented. Incrementing the major version will set
 	the other parts of the version to 0 (1.3.5 -> 2.0.0).`,
 	Run: func(cmd *cobra.Command, args []string) {
-		appName := args[0]
-		version, err := ws.GetLatest(appName)
+		version, err := ws.GetLatest(conf.App)
 		checkErr(err, true, false)
 		releaseType := getReleaseType(cmd)
-		newVersion := bumpVersion(appName, *version, releaseType)
+		newVersion := bumpVersion(conf.App, *version, releaseType)
 		fmt.Println(newVersion.SemVer())
 	},
 }
