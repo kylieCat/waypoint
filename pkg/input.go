@@ -127,6 +127,7 @@ type Backend struct {
 }
 
 type Config struct {
+	App string `json:"app" yaml:"app"`
 	Backend     *Backend    `json:"backend" yaml:"backend"`
 	Deployments Deployments `json:"deployments" yaml:"deployments"`
 }

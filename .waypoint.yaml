@@ -1,8 +1,9 @@
+app: onboarding
 backend:
   kind: datastore
   conf:
     kind: credsFile
-    project: test
+    project: unity-ie-sre-isolated-test
     value: ~/.gcp/isolated/test.json
 deployments:
   stage:
