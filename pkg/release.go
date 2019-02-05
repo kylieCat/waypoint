@@ -12,8 +12,7 @@ import (
 )
 
 type Release struct {
-	conf        *Config
-	deploy      Deployment
+	deploy      *Deployment
 	typ         ReleaseType
 	prevVersion *Version
 	newVersion  *Version
@@ -115,7 +114,6 @@ func NewRelease(conf *Config, target string, typ ReleaseType, opts ...ReleaseOpt
 	helmClient := helm.NewClient()
 	k8sClient := k8s.NewClient()
 	release := &Release{
-		conf:   conf,
 		deploy: deploy,
 		docker: dockerClient,
 		helm:   helmClient,

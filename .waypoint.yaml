@@ -5,27 +5,23 @@ backend:
     kind: credsFile
     project: unity-ie-sre-isolated-test
     value: ~/.gcp/isolated/test.json
+defaults:
+  app: onboarding
+  project: unity-ie-sre-isolated-test
+  docker:
+    repo: gcr.io/unity-ie-sre-isolated-test
+  helm:
+    name: test
+    chartDir: ./deploy/onboarding
+    set:
+      - image.tag=${VERSION}
+  tiller:
+    context: sre-test
 deployments:
   stage:
-    app: onboarding
-    cleanup: true
-    project: test
-    docker:
-      repo: gcr.io/test
-      creds: docker-credentials-gcr
-      context: ~/repos/onboarding
-      file: ~/repos/onboarding/Dockerfile
+    docker: {}
     helm:
-      name: https://chartmuseum
-      chartDir: ~/repos/onboarding/manifests/onboarding
-      destDir: ~/repos/onboarding/manifests
-      save: true
       set:
       - image.tag=${VERSION}
     tiller:
-      namespace: kube-system
-      context: test
       endpoint: https://api.k8s
-      labels:
-      - app=helm
-      - name=tiller
