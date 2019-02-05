@@ -18,6 +18,8 @@ import (
 const (
 	ListPodsTemplate = "/api/v1/namespaces/%s/pods"
 	GetPodTemplate   = "/api/v1/namespaces/%s/pods/%s"
+	defaultHostPort = 50000
+	defaultTargetPort = 44134
 )
 
 type Metadata struct {
@@ -48,8 +50,8 @@ func NewClient(opts ...Option) *Client {
 		namespace:  "kube-system",
 		labels:     []string{"app=helm", "name=tiller"},
 		http:       requests.NewClient(),
-		hostPort:   8081,
-		targetPort: 44134,
+		hostPort:   defaultHostPort,
+		targetPort: defaultTargetPort,
 	}
 	return client.ApplyOptions(opts...)
 }

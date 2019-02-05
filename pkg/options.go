@@ -8,13 +8,7 @@ import (
 
 type ReleaseOption func(release *Release)
 
-func Conf(value *Config) ReleaseOption {
-	return func(release *Release) {
-		release.conf = value
-	}
-}
-
-func Deploy(value Deployment) ReleaseOption {
+func Deploy(value *Deployment) ReleaseOption {
 	return func(release *Release) {
 		release.deploy = value
 	}
