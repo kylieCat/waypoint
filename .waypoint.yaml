@@ -1,27 +1,41 @@
-app: onboarding
+app: wayex
 backend:
   kind: datastore
   conf:
     kind: credsFile
-    project: unity-ie-sre-isolated-test
-    value: ~/.gcp/isolated/test.json
+    project: casa-de-kylie
+    value: ~/.gcp/kylie/wayex-svc-acct.json
 defaults:
-  app: onboarding
-  project: unity-ie-sre-isolated-test
+  app: wayex
+  project: casa-de-kylie
+  context: casa-de-kylie
   docker:
-    repo: gcr.io/unity-ie-sre-isolated-test
+    #    creds: docker-credential-gcr
+    #    context: ./
+    #    file: ./Dockerfile
+    repo: gcr.io/casa-de-kylie
   helm:
+    #    chartDir: ./deploy/${app}
+    #    destDir: ./deploy
+    #    save: true
     name: test
-    chartDir: ./deploy/onboarding
-    set:
-      - image.tag=${VERSION}
+    args:
+      # - --version={{.Version}}
+      - "--set image.tag={{.Version}}"
   tiller:
-    context: sre-test
+#    namespace: kube-system
+#    labels:
+#      - app=helm
+#      - name=tiller
 deployments:
   stage:
     docker: {}
+    helm: {}
+    tiller: {}
+  prod:
+    project: casa-de-kylie-prd
+    context: casa-de-kylie-prd
+    docker:
+      repo: gcr.io/casa-de-kylie-prd
     helm:
-      set:
-      - image.tag=${VERSION}
-    tiller:
-      endpoint: https://api.k8s
+      name: prd

@@ -8,9 +8,9 @@ import (
 
 type Option func(client *Client)
 
-func Endpoint(value string) Option {
+func KubeConfig(value string) Option {
 	return func(client *Client) {
-		client.endpoint = value
+		client.kubeConfig = value
 	}
 }
 
@@ -29,12 +29,6 @@ func Context(value string) Option {
 func Labels(value []string) Option {
 	return func(client *Client) {
 		client.labels = value
-	}
-}
-
-func Token(value string) Option {
-	return func(client *Client) {
-		client.token = value
 	}
 }
 

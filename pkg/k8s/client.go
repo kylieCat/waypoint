@@ -2,25 +2,27 @@ package k8s
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/url"
 	"os/exec"
-	"strings"
+
+	kx "github.com/kylie-a/kx/pkg"
 
 	"github.com/kylie-a/requests"
-	"github.com/mitchellh/go-homedir"
-	"gopkg.in/yaml.v2"
 )
 
 // Routes
 const (
-	ListPodsTemplate = "/api/v1/namespaces/%s/pods"
-	GetPodTemplate   = "/api/v1/namespaces/%s/pods/%s"
-	defaultHostPort = 50000
+	ListPodsTemplate  = "/api/v1/namespaces/%s/pods"
+	GetPodTemplate    = "/api/v1/namespaces/%s/pods/%s"
+	ListNodes          = "/api/v1/nodes/"
+	defaultHostPort   = 50000
 	defaultTargetPort = 44134
 )
+
+var conf *kx.KubeConfig
+var clusterData *kx.ClusterUserData
 
 type Metadata struct {
 	Name string `json:"name" yaml:"name"`
@@ -35,6 +37,7 @@ type ListPodsResponse struct {
 }
 
 type Client struct {
+	kubeConfig string
 	endpoint   string
 	namespace  string
 	context    string
@@ -46,14 +49,24 @@ type Client struct {
 }
 
 func NewClient(opts ...Option) *Client {
+	var err error
+
 	client := &Client{
+		kubeConfig: "~/.kube/config",
 		namespace:  "kube-system",
 		labels:     []string{"app=helm", "name=tiller"},
 		http:       requests.NewClient(),
 		hostPort:   defaultHostPort,
 		targetPort: defaultTargetPort,
 	}
-	return client.ApplyOptions(opts...)
+	client = client.ApplyOptions(opts...)
+
+	if clusterData, err = getClusterData(client.context); err != nil {
+		log.Fatalf(err.Error())
+	}
+	client.token = clusterData.User.UserConf.AuthProvider.Config.AccessToken
+	client.endpoint = clusterData.Cluster.ClusterConf.Server
+	return client
 }
 
 func (c *Client) ApplyOptions(opts ...Option) *Client {
@@ -70,7 +83,7 @@ func (c *Client) GetTillerPod() (string, error) {
 	route := c.formatURL(ListPodsTemplate, c.namespace)
 	params := c.getParamsFromLabels()
 
-	if resp, err = c.http.Get(route, requests.WithBearerToken(getAccessToken(c.context)), requests.WithQueryParams(params)); err != nil {
+	if resp, err = c.http.Get(route, requests.WithBearerToken(c.token), requests.WithQueryParams(params)); err != nil {
 		return "", err
 	}
 	var listResp ListPodsResponse
@@ -81,6 +94,22 @@ func (c *Client) GetTillerPod() (string, error) {
 		return "", NewNoPodsFoundError(params)
 	}
 	return listResp.Items[0].Metadata.Name, nil
+}
+
+func (c *Client) ListNodes() {
+	var resp *requests.Response
+	var err error
+
+	route := c.formatURL(ListNodes)
+
+	if resp, err = c.http.Get(route, requests.WithBearerToken(c.token)); err != nil {
+		log.Fatalf(err.Error())
+	}
+	var nodes map[string]interface{}
+	if err = resp.JSON(&nodes); err != nil {
+		log.Fatalf(err.Error())
+	}
+	fmt.Println(nodes)
 }
 
 func (c *Client) StartForwarder() (context.CancelFunc, error) {
@@ -126,113 +155,17 @@ func (c *Client) formatURL(url string, args ...interface{}) string {
 	return fmt.Sprintf("%s%s", c.endpoint, url)
 }
 
-var conf *k8sConf
-
-type clusterConf struct {
-	CertificateAuthorityData string `yaml:"certificate-authority-data"`
-	Server                   string `yaml:"server"`
-}
-
-type cluster struct {
-	Cluster clusterConf `yaml:"cluster"`
-	Name    string      `yaml:"name"`
-}
-
-type k8sContextConf struct {
-	Cluster   string `yaml:"cluster"`
-	Namespace string `yaml:"namespace"`
-	User      string `yaml:"user"`
-}
-
-type k8sContext struct {
-	Context k8sContextConf `yaml:"context"`
-	Name    string         `yaml:"name"`
-}
-
-type authProviderConfig struct {
-	AccessToken string `yaml:"access-token"`
-	CmdArgs     string `yaml:"cmd-args"`
-	CmdPath     string `yaml:"cmd-path"`
-	Expiry      string `yaml:"expiry"`
-	ExpiryKey   string `yaml:"expiry-key"`
-	TokenKey    string `yaml:"token-key"`
-}
-
-type authProvider struct {
-	Config authProviderConfig `yaml:"config"`
-	Name   string             `yaml:"name"`
-}
-
-type k8sUser struct {
-	AuthProvider authProvider `yaml:"auth-provider"`
-}
-
-type userConf struct {
-	User k8sUser `yaml:"user"`
-	Name string  `yaml:"name"`
-}
-
-type k8sConf struct {
-	ApiVersion     string       `yaml:"apiVersion"`
-	Clusters       []cluster    `yaml:"clusters"`
-	Contexts       []k8sContext `yaml:"contexts"`
-	CurrentContext string       `yaml:"current-context"`
-	Kind           string       `yaml:"kind"`
-	Preferences    interface{}  `yaml:"preferences"`
-	Users          []userConf   `yaml:"users"`
-}
-
-type creds struct {
-	AccessToken string `json:"access_token" yaml:"access_token" `
-}
-
-type gcloudConf struct {
-	Credential creds `json:"credential" yaml:"credential" `
-}
-
-func getConf() *k8sConf {
-	if conf == nil {
-		fileName, err := homedir.Expand("~/.kube/config")
-		b, _ := ioutil.ReadFile(fileName)
-
-		err = yaml.Unmarshal(b, &conf)
-		if err != nil {
-			fmt.Printf("ERROR: %s", err.Error())
-			return conf
-		}
-	}
-	return conf
-}
-
-func GetCurrentContext() string {
-	conf := getConf()
-	return conf.CurrentContext
-}
-
-func getAccessToken(ctxName string) string {
-	var out []byte
+func getClusterData(ctxName string) (*kx.ClusterUserData, error) {
 	var err error
 
-	conf := getConf()
-	for _, ctx := range conf.Contexts {
-		if ctx.Name == ctxName {
-			userKey := ctx.Context.User
-			for _, user := range conf.Users {
-				if user.Name == userKey {
-					authConfig := user.User.AuthProvider.Config
-					args := strings.Split(authConfig.CmdArgs, " ")
-					if out, err = exec.Command(authConfig.CmdPath, args...).Output(); err != nil {
-						fmt.Println(err.Error())
-					}
-					var creds gcloudConf
-					if err := json.Unmarshal(out, &creds); err != nil {
-						fmt.Println(err.Error())
-						return ""
-					}
-					return creds.Credential.AccessToken
-				}
-			}
+	if conf == nil {
+		if conf, err = kx.GetDefaultKubeConfig(); err != nil {
+			log.Fatalf("couldn't get kube config: %s", err.Error())
+		}
+
+		if clusterData, err = conf.GetClusterUserData(ctxName); err != nil {
+			log.Fatalf("no cluster with name %s: %s", ctxName, err.Error())
 		}
 	}
-	return ""
+	return clusterData, nil
 }

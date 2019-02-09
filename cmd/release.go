@@ -54,9 +54,7 @@ to quickly create a Cobra application.`,
 		httpClient := &http.Client{Transport: &tr}
 		helmClient := helm.NewClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
 		k8sClient := k8s.NewClient(
-			k8s.Endpoint(deploy.Tiller.Endpoint),
-			k8s.Context(deploy.Tiller.Context),
-			k8s.Labels(deploy.Tiller.Labels),
+			k8s.Context(deploy.Context),
 			k8s.HTTPClient(httpClient),
 		)
 		dockerClient, err := docker.NewDockerClient()
@@ -90,6 +88,6 @@ func init() {
 	releaseCmd.Flags().Bool("major", false, "Bump the major version up by one")
 	releaseCmd.Flags().Bool("minor", false, "Bump the minor version up by one")
 	releaseCmd.Flags().Bool("patch", false, "Bump the patch version up by one")
-	releaseCmd.Flags().Bool("rebuild", false, "Reuse the latest version up by one")
+	releaseCmd.Flags().Bool("rebuild", false, "Reuse the latest version and redeploy")
 	releaseCmd.Flags().StringVar(&target, "target", "", "The deployment to target in the conf file.")
 }
