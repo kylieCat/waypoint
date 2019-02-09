@@ -124,7 +124,7 @@ type HelmConf struct {
 	ChartDir string   `json:"chartDir" yaml:"chartDir"`
 	DestDir  string   `json:"destDir" yaml:"destDir"`
 	Save     bool     `json:"save" yaml:"save"`
-	Set      []string `json:"set" yaml:"set"`
+	Args     []string `json:"args" yaml:"args"`
 }
 
 func (h HelmConf) auxConf() AuxConf {
@@ -168,8 +168,9 @@ func (h *HelmConf) applyDefaults(defaults Deployment) {
 	if !h.Save {
 		h.Save = defaults.Helm.Save
 	}
-	if h.Set == nil || len(h.Set) == 0 {
-		h.Set = defaults.Helm.Set
+	if h.Args == nil || len(h.Args) == 0 {
+		fmt.Println(defaults.Helm.Args)
+		h.Args = defaults.Helm.Args
 	}
 }
 
@@ -178,7 +179,7 @@ type auxHelmConf struct {
 	ChartDir string   `json:"chartDir" yaml:"chartDir"`
 	DestDir  string   `json:"destDir" yaml:"destDir"`
 	Save     bool     `json:"save" yaml:"save"`
-	Set      []string `json:"set" yaml:"set"`
+	Args     []string `json:"args" yaml:"args"`
 }
 
 func (h auxHelmConf) conf(data map[string]interface{}) ConfUnmarshaler {
@@ -192,9 +193,9 @@ func (h auxHelmConf) conf(data map[string]interface{}) ConfUnmarshaler {
 			h.DestDir = value.(string)
 		case "save":
 			h.Save = value.(bool)
-		case "set":
+		case "args":
 			vals := toStringSlice(value.([]interface{}))
-			h.Set = vals
+			h.Args = vals
 		}
 	}
 	return HelmConf{
@@ -202,7 +203,7 @@ func (h auxHelmConf) conf(data map[string]interface{}) ConfUnmarshaler {
 		ChartDir: h.ChartDir,
 		DestDir:  h.DestDir,
 		Save:     h.Save,
-		Set:      h.Set,
+		Args:     h.Args,
 	}
 }
 
@@ -211,6 +212,7 @@ func newAuxHelmConf() AuxConf {
 		ChartDir: "./deploy",
 		DestDir:  "./deploy",
 		Save:     true,
+		Args: []string{"--version={{.Version}}"},
 	}
 }
 
@@ -274,7 +276,7 @@ type auxDockerConf struct {
 func newAuxDockerConf() auxDockerConf {
 	return auxDockerConf{
 		Repo:    "",
-		Creds:   "docker-credentials-gcr",
+		Creds:   "docker-credential-gcr",
 		Context: ".",
 		File:    "Dockerfile",
 	}
@@ -315,7 +317,7 @@ func DefaultHelmConf() HelmConf {
 		ChartDir: "deploy/{appName}",
 		DestDir:  "deploy/",
 		Save:     true,
-		Set:      []string{},
+		Args:     []string{},
 	}
 }
 
@@ -341,6 +343,7 @@ func NewDeployment() Deployment {
 type Deployment struct {
 	App     string     `json:"app" yaml:"app"`
 	Project string     `json:"project" yaml:"project"`
+	Context string     `json:"context" yaml:"context"`
 	Docker  DockerConf `json:"docker" yaml:"docker"`
 	Helm    HelmConf   `json:"helm" yaml:"helm"`
 	Tiller  TillerConf `json:"tiller" yaml:"tiller"`
@@ -410,6 +413,26 @@ func (d Deployment) SaveHelmLocal() bool {
 	return d.Helm.Save
 }
 
+func (d Deployment) YAML() []byte {
+	yml, _ := yaml.Marshal(d)
+	return yml
+}
+
+func (d Deployment) JSON() []byte {
+	js, _ := json.Marshal(d)
+	return js
+}
+
+func (d Deployment) YAMLString() string {
+	yml, _ := yaml.Marshal(d)
+	return string(yml)
+}
+
+func (d Deployment) JSONString() string {
+	js, _ := json.Marshal(d)
+	return string(js)
+}
+
 func (d *Deployment) applyDefaults(defaults Deployment) {
 
 	if d.App == "" {
@@ -417,6 +440,9 @@ func (d *Deployment) applyDefaults(defaults Deployment) {
 	}
 	if d.Project == "" {
 		d.Project = defaults.Project
+	}
+	if d.Context == "" {
+		d.Context = defaults.Context
 	}
 	d.Docker.applyDefaults(defaults)
 	d.Helm.applyDefaults(defaults)

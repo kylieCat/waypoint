@@ -56,3 +56,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/gosuri/uitable"
+
+[[constraint]]
+  name = "github.com/kylie-a/kx"
+  branch = "issue-#1"

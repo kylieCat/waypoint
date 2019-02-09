@@ -35,7 +35,7 @@ func NewClient(opts ...HelmOption) *Client {
 	var err error
 	var homeDir string
 
-	tillerClient := helm.NewClient(helm.Host("localhost:8081"))
+	tillerClient := helm.NewClient(helm.Host("localhost:50000"))
 
 	helmHome := ".helm"
 	if homeDir, err = homedir.Dir(); err != nil {
