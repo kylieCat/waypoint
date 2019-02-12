@@ -52,20 +52,20 @@ to quickly create a Cobra application.`,
 			},
 		}
 		httpClient := &http.Client{Transport: &tr}
-		helmClient := helm.NewClient(helm.HelmToken(os.Getenv("HELM_TOKEN")))
+		helmClient := helm.NewClient(helm.Debug(debug))
 		k8sClient := k8s.NewClient(
 			k8s.Context(deploy.Context),
 			k8s.HTTPClient(httpClient),
 		)
-		dockerClient, err := docker.NewDockerClient()
+		dockerClient, err := docker.NewDockerClient(debug)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		prevVer, err := ws.GetLatest(deploy.App)
+		prevVer, err := storage.GetLatest(deploy.App)
 		checkErr(err, true, false)
 		newVer := prevVer.Bump(releaseType)
-		if err := ws.Save(deploy.App, newVer); err != nil {
+		if err := storage.Save(deploy.App, newVer); err != nil {
 			checkErr(err, true, false)
 		}
 		release := pkg.NewRelease(
@@ -75,11 +75,22 @@ to quickly create a Cobra application.`,
 			pkg.Helm(helmClient),
 			pkg.K8s(k8sClient),
 			pkg.Docker(dockerClient),
-			pkg.DB(ws),
+			pkg.DB(storage),
 			pkg.PrevVersion(prevVer),
 			pkg.CurrentVersion(newVer),
 		)
-		release.Do(pkg.DefaultSteps)
+		steps := []pkg.Step{
+			//pkg.DeletePrevImage,
+			//pkg.DeletePrevChart,
+			//pkg.BuildImage,
+			//pkg.PushImage,
+			//pkg.CreateChart,
+			//pkg.UploadChart,
+			//pkg.UpdateHelmIndex,
+			//pkg.UpdateHelmRepos,
+			pkg.DeployChart,
+		}
+		release.Do(steps)
 	},
 }
 

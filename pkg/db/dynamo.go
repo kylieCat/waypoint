@@ -1,4 +1,4 @@
-package backend
+package db
 
 import (
 	"github.com/guregu/dynamo"

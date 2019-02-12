@@ -1,0 +1,5 @@
+package waypoint;
+
+message Release {
+
+}

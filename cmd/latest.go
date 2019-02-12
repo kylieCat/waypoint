@@ -25,10 +25,10 @@ import (
 // latestCmd represents the latest command
 var latestCmd = &cobra.Command{
 	Use:   "latest",
-	Short: "Get the latest version for an app",
+	Short: "Get the latest version for an cmd",
 	Long:  `Gets the latest version for the provided appplication name. This gets the latest version by date.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		latest, err := ws.GetLatest(conf.App)
+		latest, err := storage.GetLatest(conf.App)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

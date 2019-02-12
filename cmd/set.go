@@ -34,16 +34,16 @@ var setCmd = &cobra.Command{
 			os.Exit(2)
 		}
 		version := pkg.NewVersion(parts[pkg.MAJOR], parts[pkg.MINOR], parts[pkg.PATCH])
-		err = ws.Save(conf.App, &version)
+		err = storage.Save(conf.App, &version)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-		fmt.Printf("Added version: %s for app %s\n", version.SemVer(), conf.App)
+		fmt.Printf("Added version: %s for cmd %s\n", version.SemVer(), conf.App)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(setCmd)
-	setCmd.Flags().String("semver", "1.0.0", "The semver for the app. Defaults to 1.0.0")
+	setCmd.Flags().String("semver", "1.0.0", "The semver for the cmd. Defaults to 1.0.0")
 }

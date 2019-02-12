@@ -11,17 +11,21 @@ defaults:
   context: casa-de-kylie
   docker:
     #    creds: docker-credential-gcr
-    #    context: ./
+    #    context: .
     #    file: ./Dockerfile
     repo: gcr.io/casa-de-kylie
   helm:
-    #    chartDir: ./deploy/${app}
+    #    chartDir: ./deploy/{{.App}}
     #    destDir: ./deploy
     #    save: true
     name: test
     args:
-      # - --version={{.Version}}
-      - "--set image.tag={{.Version}}"
+      # version: {{.Version}}
+      # name: {{.App}}
+      set:
+        - image.tag={{.Version}}
+      name: wayex
+      version: 0.7.1
   tiller:
 #    namespace: kube-system
 #    labels:
@@ -30,7 +34,12 @@ defaults:
 deployments:
   stage:
     docker: {}
-    helm: {}
+    helm:
+      args:
+        set:
+          - image.tag={{.Version}}
+        name: wayex
+        version: 0.7.1
     tiller: {}
   prod:
     project: casa-de-kylie-prd

@@ -25,10 +25,10 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get all versions for an app",
-	Long:  `The get command will list out all available versions for an app in yaml format.`,
+	Short: "Get all versions for an cmd",
+	Long:  `The get command will list out all available versions for an cmd in yaml format.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		versions, err := ws.All(conf.App)
+		versions, err := storage.All(conf.App)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)

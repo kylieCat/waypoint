@@ -1,4 +1,4 @@
-package backend
+package db
 
 import (
 	"errors"
@@ -38,9 +38,9 @@ type WaypointStoreBolt struct {
 	DBFilePath string `json:"db_file_path"`
 }
 
-func NewWaypointStoreBolt(conf *pkg.Config) WaypointStoreBolt {
+func NewWaypointStoreBolt(dbPath string) WaypointStoreBolt {
 	return WaypointStoreBolt{
-		DBFilePath: "/Users/iana/.waypt/waypt.backend",
+		DBFilePath: dbPath,
 	}
 }
 
@@ -68,11 +68,11 @@ func (wp WaypointStoreBolt) All(app string) (pkg.Versions, error) {
 		if err != nil {
 			return err
 		}
-		b.ForEach(func(k, v []byte) error {
+		err = b.ForEach(func(k, v []byte) error {
 			raw = append(raw, v)
 			return nil
 		})
-		return nil
+		return err
 	})
 	versions := make(pkg.Versions, len(raw))
 	for idx, r := range raw {
@@ -112,7 +112,12 @@ func (wp WaypointStoreBolt) AddApplication(name string, initialVersion string) e
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func(){
+		err := db.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
 
 	return db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket([]byte(name))
@@ -120,19 +125,5 @@ func (wp WaypointStoreBolt) AddApplication(name string, initialVersion string) e
 			return fmt.Errorf("create bucket: %s", err)
 		}
 		return nil
-	})
-	if err != nil {
-		return nil
-	}
-	db.Close()
-	db, err = getDB(wp.DBFilePath, 0600, nil)
-	defer db.Close()
-	return db.Update(func(tx *bolt.Tx) error {
-		parts, err := pkg.GetPartsFromSemVer(initialVersion)
-		if err != nil {
-			return err
-		}
-		newVersion := pkg.NewVersion(parts[pkg.MAJOR], parts[pkg.MINOR], parts[pkg.PATCH])
-		return wp.Save(name, &newVersion)
 	})
 }

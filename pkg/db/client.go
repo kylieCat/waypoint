@@ -1,11 +1,11 @@
-package backend
+package db
 
 import (
 	"github.com/kylie-a/waypoint/pkg"
 )
 
 type Client struct {
-	pkg.BackendService
+	pkg.IStorage
 }
 
 type Auth struct {
@@ -16,13 +16,13 @@ func NewClient(conf *pkg.Config) (*Client, error) {
 	client := &Client{}
 	switch conf.Backend.Kind {
 	case pkg.DataStore:
-		client.BackendService = NewWaypointStoreDS(conf)
+		client.IStorage = NewWaypointStoreDS(conf)
 	case pkg.Bolt:
-		client.BackendService = NewWaypointStoreBolt(conf)
+		client.IStorage = NewWaypointStoreBolt(conf.Backend.Conf["dbPath"])
 	case pkg.MongoDB:
-		client.BackendService = NewWaypointStoreMongo(conf)
+		client.IStorage = NewWaypointStoreMongo(conf)
 	case pkg.Dynamo:
-		client.BackendService = NewWaypointStoreDDB(conf)
+		client.IStorage = NewWaypointStoreDDB(conf)
 	default:
 		return nil, NewUnkownBackendError(string(conf.Backend.Kind))
 	}

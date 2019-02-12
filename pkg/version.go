@@ -67,7 +67,7 @@ func NewVersion(major, minor, patch int) Version {
 
 type Versions []Version
 
-func (v Versions) Each(handler func(Record) error) error {
+func (v Versions) Each(handler func(Version) error) error {
 	for _, record := range v {
 		err := handler(record)
 		if err != nil {
@@ -77,8 +77,8 @@ func (v Versions) Each(handler func(Record) error) error {
 	return nil
 }
 
-func (vs Versions) Len() int      { return len(vs) }
-func (vs Versions) Swap(i, j int) { vs[i], vs[j] = vs[j], vs[i] }
-func (vs Versions) Less(i, j int) bool {
-	return vs[i].Timestamp < vs[j].Timestamp
+func (v Versions) Len() int      { return len(v) }
+func (v Versions) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+func (v Versions) Less(i, j int) bool {
+	return v[i].Timestamp < v[j].Timestamp
 }

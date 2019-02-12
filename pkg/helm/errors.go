@@ -70,3 +70,17 @@ func (e HelmDeleteError) Error() string {
 func NewHelmDeleteError(message string) HelmDeleteError {
 	return HelmDeleteError{Message: "error deleting previous chart: " + message}
 }
+
+// ReleaseHistoryError is a custom error type.
+type ReleaseHistoryError struct {
+	Message string
+}
+
+func (e ReleaseHistoryError) Error() string {
+	return e.Message
+}
+
+// NewReleaseHistoryError creates a new `ReleaseHistoryError`.
+func NewReleaseHistoryError(message string) ReleaseHistoryError {
+	return ReleaseHistoryError{Message: message}
+}

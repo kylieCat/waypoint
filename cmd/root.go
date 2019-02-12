@@ -11,6 +11,7 @@ import (
 var (
 	cfgFile string
 	conf    *pkg.Config
+	debug bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -30,6 +31,7 @@ func Execute() {
 func init() {
 	var err error
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", ".waypoint.yaml", "config file (default is .waypoint.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&debug,"debug", "d", false, "Verbose debug printing")
 	if conf, err = pkg.GetConf(cfgFile); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(2)

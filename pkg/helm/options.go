@@ -3,7 +3,6 @@ package helm
 import (
 	"context"
 	"crypto/tls"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
@@ -13,46 +12,40 @@ import (
 
 type HelmOption func(client *Client)
 
-func HelmHost(host string) HelmOption {
+func Host(host string) HelmOption {
 	return func(client *Client) {
 		client.tillerOpts = append(client.tillerOpts, helm.Host(host))
 	}
 }
 
-func HelmWithTLS(cfg *tls.Config) HelmOption {
+func WithTLS(cfg *tls.Config) HelmOption {
 	return func(client *Client) {
 		client.tillerOpts = append(client.tillerOpts, helm.WithTLS(cfg))
 	}
 }
 
-func HelmBeforeCall(fn func(context.Context, proto.Message) error) HelmOption {
+func BeforeCall(fn func(context.Context, proto.Message) error) HelmOption {
 	return func(client *Client) {
 		client.tillerOpts = append(client.tillerOpts, helm.BeforeCall(fn))
 	}
 }
 
-func HelmConnectTimeout(timeout int64) HelmOption {
+func ConnectTimeout(timeout int64) HelmOption {
 	return func(client *Client) {
 		client.tillerOpts = append(client.tillerOpts, helm.ConnectTimeout(timeout))
 	}
 }
 
-func HelmHome(value string) HelmOption {
+func Home(value string) HelmOption {
 	return func(client *Client) {
 		path, _ := homedir.Expand(value)
 		client.env.Home = helmpath.Home(path)
 	}
 }
 
-func HelmToken(value string) HelmOption {
+func Debug(value bool) HelmOption {
 	return func(client *Client) {
-		client.token = value
-	}
-}
-
-func HelmDebug() HelmOption {
-	return func(client *Client) {
-		client.debug = true
+		client.debug = value
 	}
 }
 
@@ -69,7 +62,7 @@ func (vo ValueOverrides) Get() helm.InstallOption {
 	return vo.opt
 }
 
-func (vo ValueOverrides) Set(raw interface{}) error {
+func (vo *ValueOverrides) Set(raw interface{}) error {
 	if value, ok := raw.([]byte); ok {
 		vo.opt = helm.ValueOverrides(value)
 	}
@@ -203,7 +196,7 @@ func (o optionsMap) Get(optName string) InstallOption {
 }
 
 var optMap = optionsMap{
-	"valueOverrides":        ValueOverrides{},
+	"valueOverrides":        &ValueOverrides{},
 	"releaseName":           ReleaseName{},
 	"installTimeout":        InstallTimeout{},
 	"installWait":           InstallWait{},

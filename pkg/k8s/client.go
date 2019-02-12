@@ -3,6 +3,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"net/url"
 	"os/exec"
@@ -90,8 +91,11 @@ func (c *Client) GetTillerPod() (string, error) {
 	if err = resp.JSON(&listResp); err != nil {
 		return "", err
 	}
-	if len(listResp.Items) != 1 {
+	if len(listResp.Items) == 0 {
 		return "", NewNoPodsFoundError(params)
+	}
+	if len(listResp.Items) > 1 {
+		return "", errors.New("too many pods")
 	}
 	return listResp.Items[0].Metadata.Name, nil
 }

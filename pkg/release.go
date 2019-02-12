@@ -1,13 +1,12 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"text/template"
 
-	"github.com/kylie-a/waypoint/pkg/docker"
-	"github.com/kylie-a/waypoint/pkg/helm"
-	"github.com/kylie-a/waypoint/pkg/k8s"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -16,10 +15,10 @@ type Release struct {
 	typ         ReleaseType
 	prevVersion *Version
 	newVersion  *Version
-	docker      *docker.Client
-	helm        *helm.Client
-	k8s         *k8s.Client
-	ws          BackendService
+	docker      IDocker
+	helm        IHelm
+	k8s         IK8s
+	db          IStorage
 }
 
 func (r Release) Do(steps []Step) {
@@ -63,11 +62,11 @@ func (r Release) TaggedImageName(version string) string {
 }
 
 func (r Release) GetHelmDeleteURL(version string) string {
-	return fmt.Sprintf("%s%s/%s/%s", r.deploy.Helm.Name, chartsAPI, r.deploy.App, version)
+	return fmt.Sprintf("%s%s/%s/%s", r.deploy.Helm.Name, ChartsAPI, r.deploy.App, version)
 }
 
 func (r Release) GetHelmPostURL() string {
-	return fmt.Sprintf("%s%s", r.deploy.Helm.Name, chartsAPI)
+	return fmt.Sprintf("%s%s", r.deploy.Helm.Name, ChartsAPI)
 }
 
 func (r Release) GetHelmChartSrc() string {
@@ -100,6 +99,23 @@ func (r Release) SaveHelmLocal() bool {
 	return r.deploy.Helm.Save
 }
 
+func (r Release) Format(tmpl string) (string, error) {
+	var buf bytes.Buffer
+
+	f := fmtData{
+		App:        r.App(),
+		NewVersion: r.newVersion.SemVer(),
+		OldVersion: r.prevVersion.SemVer(),
+	}
+	t := template.Must(template.New("letter").Parse(tmpl))
+	err := t.Execute(&buf, f)
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (r *Release) ApplyOptions(opts ...ReleaseOption) *Release {
 	for _, opt := range opts {
 		opt(r)
@@ -109,15 +125,8 @@ func (r *Release) ApplyOptions(opts ...ReleaseOption) *Release {
 
 func NewRelease(conf *Config, target string, typ ReleaseType, opts ...ReleaseOption) *Release {
 	deploy := conf.GetDeployment(target)
-	dockerClient, err := docker.NewDockerClient()
-	checkErr(err, true, false)
-	helmClient := helm.NewClient()
-	k8sClient := k8s.NewClient()
 	release := &Release{
 		deploy: deploy,
-		docker: dockerClient,
-		helm:   helmClient,
-		k8s:    k8sClient,
 		typ:    typ,
 	}
 	release.ApplyOptions(opts...)

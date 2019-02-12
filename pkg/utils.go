@@ -1,13 +1,17 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 type ReleaseType string
+type GCPAuthKind string
+type BackendKind string
 
 const (
 	Major    ReleaseType = "major"
@@ -19,6 +23,16 @@ const (
 	Red                  = "\033[0;38;5;9m"
 	ColorOff             = "\033[0m"
 	Success              = "Success!\n"
+)
+
+const (
+	DataStore BackendKind = "datastore"
+	Bolt      BackendKind = "bolt"
+	MongoDB   BackendKind = "mongo"
+	Dynamo    BackendKind = "dynamo"
+	ApiKey    GCPAuthKind = "apiKey"
+	CredsFile GCPAuthKind = "credsFile"
+	ChartsAPI             = "/api/charts"
 )
 
 func GetPartsFromSemVer(semver string) ([]int, error) {
@@ -74,5 +88,29 @@ func checkErr(err error, exitOnError, done bool) {
 	}
 	if done {
 		fmt.Println(green("DONE!"))
+	}
+}
+
+type fmtData struct {
+	OldVersion string
+	NewVersion string
+	App        string
+}
+
+func (f fmtData) Format(tmpl string) (string, error) {
+	var buf bytes.Buffer
+	t := template.Must(template.New("letter").Parse(tmpl))
+	err := t.Execute(&buf, f)
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+func newFormatter(r Release) fmtData {
+	return fmtData{
+		NewVersion: r.newVersion.SemVer(),
+		App:        r.App(),
 	}
 }

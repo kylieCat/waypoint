@@ -1,4 +1,4 @@
-package backend
+package db
 
 // UnkownBackendError is a custom error type.
 type UnkownBackendError struct {

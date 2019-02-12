@@ -7,7 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/docker/docker/cli"
+	"github.com/docker/docker/pkg/jsonmessage"
 
 	credClient "github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker/api/types"
@@ -19,17 +24,18 @@ import (
 )
 
 type Client struct {
-	dkr *client.Client
+	dkr   *client.Client
+	debug bool
 }
 
-func NewDockerClient() (*Client, error) {
+func NewDockerClient(debug bool) (*Client, error) {
 	var cli *client.Client
 	var err error
 
 	if cli, err = client.NewEnvClient(); err != nil {
 		return nil, err
 	}
-	return &Client{dkr: cli}, nil
+	return &Client{dkr: cli, debug: debug}, nil
 }
 
 func (c *Client) getDockerListOpts(image string) types.ImageListOptions {
@@ -57,12 +63,49 @@ func (c *Client) RemoveImage(taggedImageName string) error {
 	return err
 }
 
+type StreamReader struct {
+	body io.ReadCloser
+}
+
+func NewStreamReader(body io.ReadCloser) *StreamReader {
+	return &StreamReader{body: body}
+}
+
+func (s StreamReader) Print() error {
+	var err error
+
+	aux := func(msg jsonmessage.JSONMessage) {
+		var result BuildResult
+		if err := json.Unmarshal(*msg.Aux, &result); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	err = jsonmessage.DisplayJSONMessagesStream(s.body, os.Stdout, os.Stdout.Fd(), true, aux)
+	if err != nil {
+		if jerr, ok := err.(*jsonmessage.JSONError); ok {
+			// If no error code is set, default to 1
+			if jerr.Code == 0 {
+				jerr.Code = 1
+			}
+			return cli.StatusError{Status: jerr.Message, StatusCode: jerr.Code}
+		}
+		return err
+	}
+	return nil
+}
+
+type BuildResult struct {
+	ID string
+}
+
 func (c *Client) BuildImage(taggedImageName, buildCtx string) error {
 	var err error
 	var body types.ImageBuildResponse
 	var ctx io.Reader
 
-	if ctx, err = c.GetContext(buildCtx); err != nil {
+	path, _ := filepath.Abs(buildCtx)
+	if ctx, err = c.GetContext(path); err != nil {
 		return err
 	}
 	opts := types.ImageBuildOptions{
@@ -72,8 +115,15 @@ func (c *Client) BuildImage(taggedImageName, buildCtx string) error {
 		return err
 	}
 	defer body.Body.Close()
-	if _, err = ioutil.ReadAll(body.Body); err != nil {
-		return err
+	if c.debug {
+		reader := NewStreamReader(body.Body)
+		if err = reader.Print(); err != nil {
+			return err
+		}
+	} else {
+		if _, err = ioutil.ReadAll(body.Body); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -91,9 +141,15 @@ func (c *Client) PushImage(ref, repo, credHelper string) error {
 		return err
 	}
 	defer body.Close()
-	if _, err = ioutil.ReadAll(body); err != nil {
-		// {"errorDetail":{"message":"unauthorized: You don't have the needed permissions to perform this operation, and you may have invalid credentials. To authenticate your request, follow the steps in: https://cloud.google.com/container-registry/docs/advanced-authentication"},"error":"unauthorized: You don't have the needed permissions to perform this operation, and you may have invalid credentials. To authenticate your request, follow the steps in: https://cloud.google.com/container-registry/docs/advanced-authentication"}
-		return err
+	if c.debug {
+		reader := NewStreamReader(body)
+		if err = reader.Print(); err != nil {
+			return err
+		}
+	} else {
+		if _, err = ioutil.ReadAll(body); err != nil {
+			return err
+		}
 	}
 	return nil
 }

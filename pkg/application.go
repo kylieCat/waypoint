@@ -11,7 +11,7 @@ func (app Application) GetKey() []byte {
 
 type Applications []*Application
 
-func (app Applications) Each(handler func(Record) error) error {
+func (app Applications) Each(handler func(*Application) error) error {
 	for _, record := range app {
 		err := handler(record)
 		if err != nil {

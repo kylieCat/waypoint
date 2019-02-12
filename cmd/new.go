@@ -30,16 +30,16 @@ var newCmd = &cobra.Command{
 	--initial option`,
 	Run: func(cmd *cobra.Command, args []string) {
 		initial := cmd.Flag("initial").Value.String()
-		err := ws.AddApplication(args[0], initial)
+		err := storage.AddApplication(args[0], initial)
 		if err != nil {
 			fmt.Println(err.Error())
 			os.Exit(2)
 		}
-		fmt.Printf("Added app %s and set initial version to %s\n", args[0], initial)
+		fmt.Printf("Added cmd %s and set initial version to %s\n", args[0], initial)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(newCmd)
-	newCmd.Flags().String("initial", "0.1.0", "Set the initial version for an app")
+	newCmd.Flags().String("initial", "0.1.0", "Set the initial version for an cmd")
 }

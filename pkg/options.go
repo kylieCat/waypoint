@@ -1,11 +1,5 @@
 package pkg
 
-import (
-	"github.com/kylie-a/waypoint/pkg/docker"
-	"github.com/kylie-a/waypoint/pkg/helm"
-	"github.com/kylie-a/waypoint/pkg/k8s"
-)
-
 type ReleaseOption func(release *Release)
 
 func Deploy(value *Deployment) ReleaseOption {
@@ -32,26 +26,26 @@ func CurrentVersion(value *Version) ReleaseOption {
 	}
 }
 
-func Docker(value *docker.Client) ReleaseOption {
+func Docker(value IDocker) ReleaseOption {
 	return func(release *Release) {
 		release.docker = value
 	}
 }
 
-func Helm(value *helm.Client) ReleaseOption {
+func Helm(value IHelm) ReleaseOption {
 	return func(release *Release) {
 		release.helm = value
 	}
 }
 
-func K8s(value *k8s.Client) ReleaseOption {
+func K8s(value IK8s) ReleaseOption {
 	return func(release *Release) {
 		release.k8s = value
 	}
 }
 
-func DB(value BackendService) ReleaseOption {
+func DB(value IStorage) ReleaseOption {
 	return func(release *Release) {
-		release.ws = value
+		release.db = value
 	}
 }

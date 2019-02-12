@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/kylie-a/waypoint/pkg"
-	"github.com/kylie-a/waypoint/pkg/backend"
+	"github.com/kylie-a/waypoint/pkg/db"
 	"github.com/spf13/cobra"
 )
 
@@ -22,12 +22,12 @@ var (
 	DONE = fmt.Sprintf("%sDONE!%s", GREEN, COLOR_OFF)
 )
 
-var ws pkg.BackendService
+var storage pkg.IStorage
 
 func InitDB(conf *pkg.Config) {
 	var err error
 
-	if ws, err = backend.NewClient(conf); err != nil {
+	if storage, err = db.NewClient(conf); err != nil {
 		fmt.Println(err.Error())
 	}
 }
@@ -102,6 +102,6 @@ func bumpVersion(appName string, version pkg.Version, releaseType pkg.ReleaseTyp
 	case pkg.Patch:
 		newVersion = version.BumpPatch()
 	}
-	checkErr(ws.Save(appName, &newVersion), true, false)
+	checkErr(storage.Save(appName, &newVersion), true, false)
 	return &newVersion
 }

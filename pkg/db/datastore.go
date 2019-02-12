@@ -1,8 +1,7 @@
-package backend
+package db
 
 import (
 	"context"
-
 	"log"
 
 	"cloud.google.com/go/datastore"
@@ -14,13 +13,12 @@ import (
 
 type WaypointStoreDS struct {
 	client *datastore.Client
-	auth   pkg.BackendAuthConf
 }
 
 func NewWaypointStoreDS(conf *pkg.Config) *WaypointStoreDS {
 	client, err := datastore.NewClient(context.Background(), conf.Backend.Conf["project"], getAuth(conf))
 	if err != nil {
-		panic(err.Error())
+		panic("error getting storage client: " + err.Error())
 	}
 	return &WaypointStoreDS{client: client}
 }

@@ -1,14 +1,16 @@
 package helm
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
-	"bytes"
-
 	"github.com/kylie-a/requests"
+	"github.com/kylie-a/waypoint/pkg"
+	"github.com/labstack/gommon/log"
 	"github.com/mitchellh/go-homedir"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/getter"
@@ -19,6 +21,7 @@ import (
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 	"k8s.io/helm/pkg/renderutil"
 	"k8s.io/helm/pkg/repo"
+	storageerrors "k8s.io/helm/pkg/storage/errors"
 )
 
 const chartsAPI = "/api/charts"
@@ -47,7 +50,7 @@ func NewClient(opts ...HelmOption) *Client {
 	client := &Client{
 		tillerClient: tillerClient,
 		env:          env,
-		debug: false,
+		debug:        false,
 	}
 	for _, opt := range opts {
 		opt(client)
@@ -150,26 +153,49 @@ func (c *Client) Package(src, version, dest string, saveLocal bool) error {
 	return err
 }
 
-func (c *Client) Install(src, ns string, opts map[string]interface{}) error {
+func (c *Client) IsInstalled(name string) bool {
+	var err error
+
+	if _, err = c.tillerClient.ReleaseHistory(name, helm.WithMaxHistory(1)); err != nil {
+		if strings.Contains(err.Error(), storageerrors.ErrReleaseNotFound(name).Error()) {
+			return false
+		}
+		log.Fatalf("error checking history: %s", err.Error())
+	}
+	return true
+}
+
+func (c *Client) Deploy(name, src, ns string, opts pkg.Args) error {
+	if !c.IsInstalled(name) {
+		return c.Install(src, ns, opts)
+	}
+	return c.Upgrade(name, src, opts)
+}
+
+func (c *Client) Install(src, ns string, opts pkg.Args) error {
 	var ch *chart.Chart
 	var err error
 
 	if ch, err = chartutil.LoadFile(src); err != nil {
 		return err
 	}
-	// installOpts := optMap.getOptions(opts)
-	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns); err != nil {
+	installOpts := optMap.getOptions(map[string]interface{}{"releaseName": "wayex"})
+	if _, err = c.tillerClient.InstallReleaseFromChart(ch, ns, installOpts...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Client) Upgrade(app, src string, opts map[string]interface{}) error {
-	//var ch *chart.Chart
+func (c *Client) Upgrade(app, src string, opts pkg.Args) error {
+	var ch *chart.Chart
 	var rel *rls.UpdateReleaseResponse
 	var err error
 
-	if rel, err = c.tillerClient.UpdateRelease(app, src); err != nil {
+	if ch, err = chartutil.LoadFile(src); err != nil {
+		return err
+	}
+	updateOpts := updateOptions.getOptions(opts)
+	if rel, err = c.tillerClient.UpdateReleaseFromChart(app, ch, updateOpts...); err != nil {
 		return err
 	}
 
